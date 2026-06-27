@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueLink — Search Profile</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
+
+        nav {
+            background: #1877f2;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1565d8;
+        }
+        .logo { color: white; font-size: 24px; font-weight: bold; }
+        .nav-right { display: flex; gap: 8px; align-items: center; }
+        .nav-right input {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 150px;
+        }
+        .btn-login {
+            padding: 5px 14px;
+            background: white;
+            color: #1877f2;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-login:hover { background: #e8f0fe; }
+
+        .nav-links-bar {
+            background: #1565d8;
+            padding: 5px 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links-bar a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-size: 12px;
+            padding: 3px 0;
+        }
+        .nav-links-bar a:hover { color: white; text-decoration: underline; }
+        .nav-links-bar a.active { color: white; font-weight: bold; }
+
+        .page-bar {
+            background: #3b5998;
+            padding: 6px 20px;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .main {
+            display: flex;
+            max-width: 900px;
+            margin: 20px auto;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 0 20px;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .side-box { background: white; border: 1px solid #aaa; }
+        .side-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .side-box-body {
+            padding: 10px;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.9;
+        }
+        .side-box-body a {
+            color: #1877f2;
+            text-decoration: none;
+            display: block;
+        }
+        .side-box-body a:hover { text-decoration: underline; }
+
+        /* CONTENT */
+        .content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+
+        /* SEARCH BOX */
+        .search-box { background: white; border: 1px solid #aaa; }
+        .search-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .search-box-body { padding: 14px; }
+        .search-row { display: flex; gap: 8px; }
+        .search-row input {
+            flex: 1;
+            padding: 8px 10px;
+            border: 1px solid #aaa;
+            font-size: 13px;
+            outline: none;
+        }
+        .search-row input:focus { border-color: #1877f2; }
+        .btn-search {
+            padding: 8px 20px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-search:hover { background: #1255b5; }
+        .search-hint { font-size: 11px; color: #888; margin-top: 6px; }
+
+        /* NOT FOUND */
+        .not-found {
+            background: #fff8e1;
+            border: 1px solid #f4c542;
+            padding: 14px;
+            font-size: 12px;
+            color: #555;
+            display: none;
+            line-height: 1.7;
+        }
+        .not-found strong { color: #000; }
+
+        /* PROFILE CARD */
+        .profile-section { display: none; }
+
+        .profile-top {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* PHOTO BOX */
+        .photo-box { background: white; border: 1px solid #aaa; width: 150px; flex-shrink: 0; }
+        .photo-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .photo-box-body { padding: 12px; text-align: center; }
+        .avatar-big {
+            width: 90px;
+            height: 90px;
+            background: #dde;
+            border: 2px solid #aaa;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            margin: 0 auto 8px;
+        }
+        .verified-stamp {
+            background: #e8f5e9;
+            border: 1px solid #42b72a;
+            color: #1a6e0a;
+            font-size: 10px;
+            padding: 3px 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .pending-stamp {
+            background: #fff8e1;
+            border: 1px solid #f4c542;
+            color: #856404;
+            font-size: 10px;
+            padding: 3px 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        /* INFO BOX */
+        .info-box { flex: 1; background: white; border: 1px solid #aaa; }
+        .info-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .info-box-body { padding: 10px; }
+        .info-row {
+            display: flex;
+            padding: 5px 0;
+            border-bottom: 1px dotted #ddd;
+            font-size: 12px;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { width: 130px; font-weight: bold; color: #000; flex-shrink: 0; }
+        .info-value { color: #333; }
+        .info-value.blue { color: #1877f2; font-weight: bold; }
+        .info-value.green { color: #1a6e0a; font-weight: bold; }
+        .info-value.orange { color: #856404; font-weight: bold; }
+
+        /* TRUST SIGNALS */
+        .full-box { background: white; border: 1px solid #aaa; }
+        .full-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .full-box-body { padding: 12px; }
+
+        .signals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .signal-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 5px 8px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+        .ck { color: #1a6e0a; font-weight: bold; }
+        .cx { color: #cc0000; font-weight: bold; }
+        .pw { color: #856404; font-weight: bold; }
+
+        /* STATS */
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 0;
+        }
+        .stat-box {
+            flex: 1;
+            text-align: center;
+            background: #f0f4ff;
+            border: 1px solid #b0c0e8;
+            padding: 10px 6px;
+        }
+        .stat-box h3 { font-size: 20px; color: #1877f2; }
+        .stat-box p { font-size: 11px; color: #555; margin-top: 2px; }
+
+        /* ACTIONS */
+        .actions-box { background: white; border: 1px solid #aaa; }
+        .actions-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .actions-box-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+
+        .btn-action-green {
+            width: 100%;
+            padding: 7px;
+            background: #42b72a;
+            color: white;
+            border: 1px solid #2d8a1a;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-action-green:hover { background: #36a420; }
+        .btn-action-blue {
+            width: 100%;
+            padding: 7px;
+            background: #e8f0fe;
+            color: #1877f2;
+            border: 1px solid #b0c0e8;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-action-blue:hover { background: #d0e0fc; }
+        .btn-action-red {
+            width: 100%;
+            padding: 7px;
+            background: white;
+            color: #cc0000;
+            border: 1px solid #ddd;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-action-red:hover { border-color: #cc0000; background: #fde8e8; }
+
+        /* REVIEWS */
+        .review {
+            padding: 10px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+        .review:last-child { border-bottom: none; }
+        .review-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .reviewer-name { font-weight: bold; font-size: 12px; color: #1877f2; }
+        .reviewer-id { font-size: 11px; color: #888; }
+        .stars { color: #f4a000; font-size: 13px; }
+        .review-text { font-size: 12px; color: #333; line-height: 1.5; margin-bottom: 4px; }
+        .verified-tag {
+            background: #e8f5e9;
+            border: 1px solid #42b72a;
+            color: #1a6e0a;
+            font-size: 10px;
+            padding: 2px 6px;
+            display: inline-block;
+        }
+        .review-date { font-size: 11px; color: #888; margin-top: 3px; }
+
+        /* EMPTY REVIEWS */
+        .no-reviews {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 12px;
+        }
+        .no-reviews a { color: #1877f2; text-decoration: none; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            background: white;
+            border: 1px solid #aaa;
+            padding: 40px 20px;
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        .empty-state .big-icon { font-size: 48px; margin-bottom: 10px; }
+        .empty-state strong { color: #333; display: block; font-size: 15px; margin-bottom: 6px; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 11px;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            background: white;
+        }
+        footer a { color: #1877f2; text-decoration: none; margin: 0 6px; }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="logo">TrueLink</div>
+    <div class="nav-right">
+        <input type="text" placeholder="Email or Phone">
+        <input type="password" placeholder="Password" style="width:110px;">
+        <button class="btn-login">Log In</button>
+    </div>
+</nav>
+
+<div class="nav-links-bar">
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="profile.html" class="active">Search ID</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="#">FAQ</a>
+</div>
+
+<div class="page-bar">Search TrueLink Profile</div>
+
+<div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="side-box">
+            <div class="side-box-header">My Account</div>
+            <div class="side-box-body">
+                <a href="signup.html">→ Create My ID</a>
+                <a href="#">→ My Profile</a>
+                <a href="#">→ My Reviews</a>
+                <a href="#">→ My Deals</a>
+                <a href="index.html">→ Home</a>
+            </div>
+        </div>
+
+        <div class="side-box">
+            <div class="side-box-header">How to Search</div>
+            <div class="side-box-body">
+                Enter the TrueLink ID of the person you want to check.<br><br>
+                Format: <strong>TL-XXXX-XX</strong><br><br>
+                Ask the person to share their ID from their profile.
+            </div>
+        </div>
+
+        <div class="side-box">
+            <div class="side-box-header">Quick Links</div>
+            <div class="side-box-body">
+                <a href="signup.html">→ Create Your ID</a>
+                <a href="marketplace.html">→ Marketplace</a>
+                <a href="review.html">→ Leave Review</a>
+                <a href="#">→ FAQ</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- SEARCH BOX -->
+        <div class="search-box">
+            <div class="search-box-header">Search TrueLink ID</div>
+            <div class="search-box-body">
+                <div class="search-row">
+                    <input type="text" id="searchInput" placeholder="Enter TrueLink ID — e.g. TL-4829-XK">
+                    <button class="btn-search" onclick="searchProfile()">Search</button>
+                </div>
+                <div class="search-hint">Enter the exact TrueLink ID to view a verified profile.</div>
+            </div>
+        </div>
+
+        <!-- NOT FOUND MSG -->
+        <div class="not-found" id="notFound">
+            <strong>No profile found for this ID.</strong><br>
+            Please check the ID and try again. TrueLink IDs are in the format <strong>TL-XXXX-XX</strong>.<br><br>
+            If you are looking for someone, ask them to share their TrueLink ID with you.<br>
+            Don't have an ID yet? <a href="signup.html">Create yours free →</a>
+        </div>
+
+        <!-- DEFAULT EMPTY STATE -->
+        <div class="empty-state" id="emptyState">
+            <div class="big-icon">🔍</div>
+            <strong>Search for a TrueLink Profile</strong>
+            Enter a TrueLink ID above to view a verified profile.<br>
+            TrueLink IDs look like: <strong>TL-4829-XK</strong><br><br>
+            Don't have an ID yet? <a href="signup.html">Create yours free →</a>
+        </div>
+
+        <!-- PROFILE SECTION — shown after search -->
+        <div class="profile-section" id="profileSection">
+
+            <!-- TOP ROW -->
+            <div class="profile-top" style="margin-bottom:12px;">
+
+                <!-- PHOTO -->
+                <div class="photo-box">
+                    <div class="photo-box-header">Photo</div>
+                    <div class="photo-box-body">
+                        <div class="avatar-big">👤</div>
+                        <div id="verifyStamp" class="verified-stamp">✓ TrueLink Verified</div>
+                    </div>
+                </div>
+
+                <!-- INFO -->
+                <div class="info-box">
+                    <div class="info-box-header">Account Information</div>
+                    <div class="info-box-body">
+                        <div class="info-row">
+                            <span class="info-label">Name:</span>
+                            <span class="info-value" id="pName">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">TrueLink ID:</span>
+                            <span class="info-value blue" id="pID">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Member Since:</span>
+                            <span class="info-value" id="pSince">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Identity Status:</span>
+                            <span class="info-value orange" id="pStatus">⏳ Under Review (24 hrs)</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone Verified:</span>
+                            <span class="info-value green">✓ Yes</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email Verified:</span>
+                            <span class="info-value green">✓ Yes</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Total Reviews:</span>
+                            <span class="info-value" id="pReviews">0</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Disputes:</span>
+                            <span class="info-value green">0 — Clean Record</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRUST SIGNALS -->
+            <div class="full-box" style="margin-bottom:12px;">
+                <div class="full-box-header">Trust Signals</div>
+                <div class="full-box-body">
+                    <div class="signals-grid">
+                        <div class="signal-item"><span class="ck">✓</span> Phone Verified</div>
+                        <div class="signal-item"><span class="ck">✓</span> Email Verified</div>
+                        <div class="signal-item"><span class="pw">⏳</span> Gov ID — Under Review</div>
+                        <div class="signal-item"><span class="cx">✗</span> Address Verified</div>
+                        <div class="signal-item"><span class="cx">✗</span> Reviews Yet</div>
+                        <div class="signal-item"><span class="cx">✗</span> Business Verified</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="full-box" style="margin-bottom:12px;">
+                <div class="full-box-header">Deal Statistics</div>
+                <div class="full-box-body">
+                    <div class="stats-row">
+                        <div class="stat-box"><h3 id="sTotalReviews">0</h3><p>Total Reviews</p></div>
+                        <div class="stat-box"><h3>0</h3><p>Disputes</p></div>
+                        <div class="stat-box"><h3 id="sSuccess">—</h3><p>Success Rate</p></div>
+                        <div class="stat-box"><h3 id="sSince">—</h3><p>Member Since</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="actions-box" style="margin-bottom:12px;">
+                <div class="actions-box-header">Actions</div>
+                <div class="actions-box-body">
+                    <button class="btn-action-green" onclick="window.location.href='review.html'">✍️ Leave a Review for This Person</button>
+                    <button class="btn-action-blue">💼 Hire This Person</button>
+                    <button class="btn-action-blue">📜 Request Deal Certificate</button>
+                    <button class="btn-action-red">⚠️ Report This Profile</button>
+                </div>
+            </div>
+
+            <!-- REVIEWS -->
+            <div class="full-box">
+                <div class="full-box-header">Verified Reviews</div>
+                <div class="full-box-body">
+                    <div class="no-reviews" id="noReviews">
+                        <p>No reviews yet for this profile.</p>
+                        <p>Be the first — <a href="review.html">Leave a Review →</a></p>
+                    </div>
+                    <div id="reviewsList"></div>
+                </div>
+            </div>
+
+        </div>
+        <!-- END PROFILE SECTION -->
+
+    </div>
+</div>
+
+<footer>
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms</a>
+    <br><br>
+    © 2026 TrueLink · Trust. Verified.
+</footer>
+
+<script>
+    // Demo profiles — in real app this comes from database
+    const demoProfiles = {
+        'TL-4829-XK': {
+            name: 'Rahul Sharma',
+            since: 'June 2026',
+            status: 'verified',
+            reviews: 3,
+            reviewList: [
+                { name: 'Priya M.', id: 'TL-2910-AK', stars: 5, text: 'Very professional. Delivered logo exactly as discussed. Highly recommend!', date: 'June 20, 2026' },
+                { name: 'Amit S.', id: 'TL-5521-BM', stars: 5, text: 'Great communication. Work was clean and on time.', date: 'June 15, 2026' },
+                { name: 'Sneha P.', id: 'TL-3341-XP', stars: 4, text: 'Good quality work. Took a bit longer than expected but result was worth it.', date: 'June 10, 2026' }
+            ]
+        }
+    };
+
+    // Check URL for ID param
+    window.onload = function() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        if (id) {
+            document.getElementById('searchInput').value = id;
+            searchProfile();
+        }
+    };
+
+    function searchProfile() {
+        const input = document.getElementById('searchInput').value.trim().toUpperCase();
+
+        // Hide all states
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('notFound').style.display = 'none';
+        document.getElementById('profileSection').style.display = 'none';
+
+        if (!input) {
+            alert('Please enter a TrueLink ID.');
+            document.getElementById('emptyState').style.display = 'block';
+            return;
+        }
+
+        if (!input.startsWith('TL-')) {
+            document.getElementById('notFound').style.display = 'block';
+            return;
+        }
+
+        // Check demo profiles
+        if (demoProfiles[input]) {
+            showProfile(input, demoProfiles[input]);
+        } else {
+            // New user — show blank profile (as if just registered)
+            showNewProfile(input);
+        }
+    }
+
+    function showProfile(id, data) {
+        document.getElementById('profileSection').style.display = 'block';
+        document.getElementById('pName').textContent = data.name;
+        document.getElementById('pID').textContent = id;
+        document.getElementById('pSince').textContent = data.since;
+        document.getElementById('sSince').textContent = data.since;
+        document.getElementById('pReviews').textContent = data.reviews;
+        document.getElementById('sTotalReviews').textContent = data.reviews;
+
+        if (data.status === 'verified') {
+            document.getElementById('pStatus').textContent = '✓ Government ID Verified';
+            document.getElementById('pStatus').className = 'info-value green';
+            document.getElementById('verifyStamp').className = 'verified-stamp';
+            document.getElementById('verifyStamp').textContent = '✓ TrueLink Verified';
+            document.getElementById('sSuccess').textContent = '100%';
+        }
+
+        // Reviews
+        if (data.reviewList && data.reviewList.length > 0) {
+            document.getElementById('noReviews').style.display = 'none';
+            let html = '';
+            data.reviewList.forEach(r => {
+                const stars = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars);
+                html += `
+                    <div class="review">
+                        <div class="review-top">
+                            <div>
+                                <div class="reviewer-name">${r.name}</div>
+                                <div class="reviewer-id">${r.id}</div>
+                            </div>
+                            <div class="stars">${stars}</div>
+                        </div>
+                        <div class="review-text">${r.text}</div>
+                        <span class="verified-tag">✓ Verified Deal</span>
+                        <div class="review-date">${r.date}</div>
+                    </div>`;
+            });
+            document.getElementById('reviewsList').innerHTML = html;
+        }
+    }
+
+    function showNewProfile(id) {
+        document.getElementById('profileSection').style.display = 'block';
+        document.getElementById('pName').textContent = 'TrueLink User';
+        document.getElementById('pID').textContent = id;
+        document.getElementById('pSince').textContent = 'June 2026';
+        document.getElementById('sSince').textContent = 'June 2026';
+        document.getElementById('pReviews').textContent = '0';
+        document.getElementById('sTotalReviews').textContent = '0';
+        document.getElementById('sSuccess').textContent = '—';
+        document.getElementById('pStatus').textContent = '⏳ Government ID Under Review';
+        document.getElementById('pStatus').className = 'info-value orange';
+        document.getElementById('verifyStamp').className = 'pending-stamp';
+        document.getElementById('verifyStamp').textContent = '⏳ Verification Pending';
+        document.getElementById('noReviews').style.display = 'block';
+        document.getElementById('reviewsList').innerHTML = '';
+    }
+
+    // Enter key
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchProfile();
+    });
+</script>
+
+</body>
+</html>

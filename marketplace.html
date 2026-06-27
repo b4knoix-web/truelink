@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueLink — Marketplace</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
+
+        nav {
+            background: #1877f2;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1565d8;
+        }
+        .logo { color: white; font-size: 24px; font-weight: bold; }
+        .nav-right { display: flex; gap: 8px; align-items: center; }
+        .nav-right input {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            width: 150px;
+        }
+        .btn-login {
+            padding: 5px 14px;
+            background: white;
+            color: #1877f2;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-login:hover { background: #e8f0fe; }
+
+        .nav-links-bar {
+            background: #1565d8;
+            padding: 5px 20px;
+            display: flex;
+            gap: 20px;
+        }
+        .nav-links-bar a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-size: 12px;
+            padding: 3px 0;
+        }
+        .nav-links-bar a:hover { color: white; text-decoration: underline; }
+        .nav-links-bar a.active { color: white; font-weight: bold; border-bottom: 2px solid white; }
+
+        .page-bar {
+            background: #3b5998;
+            padding: 6px 20px;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-bar span { font-size: 11px; font-weight: normal; opacity: 0.85; }
+
+        .main {
+            display: flex;
+            max-width: 960px;
+            margin: 14px auto;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 0 20px;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .side-box { background: white; border: 1px solid #aaa; }
+        .side-box-header {
+            background: #3b5998;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .side-box-body {
+            padding: 10px;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.9;
+        }
+        .side-box-body a {
+            color: #1877f2;
+            text-decoration: none;
+            display: block;
+        }
+        .side-box-body a:hover { text-decoration: underline; }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .filter-item label { cursor: pointer; }
+
+        .btn-post-service {
+            display: block;
+            width: 100%;
+            padding: 7px;
+            background: #42b72a;
+            color: white;
+            border: 1px solid #2d8a1a;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-post-service:hover { background: #36a420; }
+
+        /* CONTENT */
+        .content { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+        /* SEARCH BAR */
+        .search-bar-box {
+            background: white;
+            border: 1px solid #aaa;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-bar-box input {
+            flex: 1;
+            padding: 7px 10px;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            min-width: 180px;
+            outline: none;
+        }
+        .search-bar-box input:focus { border-color: #1877f2; }
+        .search-bar-box select {
+            padding: 7px 8px;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            background: white;
+            outline: none;
+        }
+        .btn-search-market {
+            padding: 7px 18px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-search-market:hover { background: #1255b5; }
+
+        /* STATS BAR */
+        .stats-bar {
+            background: #f0f4ff;
+            border: 1px solid #b0c0e8;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #333;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .stats-bar strong { color: #1877f2; }
+
+        /* CATEGORY HEADER */
+        .cat-header {
+            background: #3b5998;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid #2a4080;
+        }
+
+        /* FREELANCER CARD */
+        .f-card {
+            background: white;
+            border: 1px solid #aaa;
+            display: flex;
+        }
+        .f-card-left {
+            width: 130px;
+            flex-shrink: 0;
+            border-right: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            background: #f9f9f9;
+        }
+        .f-avatar {
+            width: 58px; height: 58px;
+            background: #dde;
+            border: 1px solid #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin: 0 auto 6px;
+        }
+        .f-name { font-weight: bold; font-size: 12px; margin-bottom: 2px; }
+        .f-id { color: #1877f2; font-size: 10px; margin-bottom: 5px; }
+        .f-verified {
+            background: #e8f5e9;
+            border: 1px solid #42b72a;
+            color: #1a6e0a;
+            font-size: 9px;
+            padding: 2px 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .f-stats {
+            font-size: 10px;
+            color: #555;
+            line-height: 1.9;
+            text-align: left;
+        }
+        .f-stats strong { color: #000; }
+
+        .f-card-right { flex: 1; padding: 12px; }
+        .f-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1877f2;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .f-title:hover { text-decoration: underline; }
+        .f-desc {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .f-skills { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+        .f-skill {
+            background: #e8f0fe;
+            border: 1px solid #b0c0e8;
+            color: #1877f2;
+            padding: 2px 8px;
+            font-size: 10px;
+        }
+        .f-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px dotted #ddd;
+            padding-top: 8px;
+        }
+        .f-price { font-size: 13px; font-weight: bold; color: #1a6e0a; }
+        .f-price span { font-size: 11px; color: #888; font-weight: normal; }
+        .f-reviews { font-size: 11px; color: #888; margin-top: 2px; }
+        .f-stars { color: #f4a000; }
+        .f-actions { display: flex; gap: 6px; }
+
+        .btn-view-profile {
+            padding: 5px 12px;
+            background: #f2f2f2;
+            color: #1877f2;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-view-profile:hover { background: #e0e8ff; border-color: #1877f2; }
+
+        .btn-hire-now {
+            padding: 5px 14px;
+            background: #42b72a;
+            color: white;
+            border: 1px solid #2d8a1a;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-hire-now:hover { background: #36a420; }
+
+        /* HIRE MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white;
+            border: 1px solid #aaa;
+            width: 420px;
+            max-width: 90%;
+        }
+        .modal-header {
+            background: #3b5998;
+            color: white;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-body { padding: 16px; }
+        .modal-body label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            margin-top: 10px;
+            color: #333;
+        }
+        .modal-body label:first-child { margin-top: 0; }
+        .modal-body input,
+        .modal-body textarea,
+        .modal-body select {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            font-family: Arial;
+            outline: none;
+        }
+        .modal-body input:focus,
+        .modal-body textarea:focus { border-color: #1877f2; }
+        .modal-freelancer-info {
+            background: #f0f4ff;
+            border: 1px solid #b0c0e8;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .modal-avatar {
+            width: 36px; height: 36px;
+            background: #dde;
+            border: 1px solid #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .modal-f-name { font-weight: bold; font-size: 13px; }
+        .modal-f-id { color: #1877f2; font-size: 11px; }
+        .modal-footer {
+            padding: 10px 16px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .btn-send-request {
+            padding: 7px 20px;
+            background: #42b72a;
+            color: white;
+            border: 1px solid #2d8a1a;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-send-request:hover { background: #36a420; }
+        .btn-modal-cancel {
+            padding: 7px 14px;
+            background: #f2f2f2;
+            color: #555;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* POST SERVICE FORM */
+        .post-form-box {
+            background: white;
+            border: 1px solid #aaa;
+            display: none;
+        }
+        .post-form-box.show { display: block; }
+        .post-form-header {
+            background: #3b5998;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .post-form-body { padding: 14px; }
+        .post-form-body label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            margin-top: 10px;
+        }
+        .post-form-body label:first-child { margin-top: 0; }
+        .post-form-body input,
+        .post-form-body select,
+        .post-form-body textarea {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            font-family: Arial;
+            outline: none;
+            margin-bottom: 2px;
+        }
+        .post-form-body input:focus,
+        .post-form-body textarea:focus { border-color: #1877f2; }
+        .post-msg {
+            padding: 7px 10px;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+        .post-msg.success { background: #e8f5e9; border: 1px solid #42b72a; color: #1a6e0a; display: block; }
+        .post-msg.error { background: #fde8e8; border: 1px solid #cc0000; color: #cc0000; display: block; }
+        .post-form-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .btn-submit-listing {
+            padding: 7px 20px;
+            background: #42b72a;
+            color: white;
+            border: 1px solid #2d8a1a;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-submit-listing:hover { background: #36a420; }
+        .btn-cancel-form {
+            padding: 7px 14px;
+            background: #f2f2f2;
+            color: #555;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* MSG */
+        .hire-msg {
+            padding: 7px 10px;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+        .hire-msg.success { background: #e8f5e9; border: 1px solid #42b72a; color: #1a6e0a; display: block; }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 11px;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            background: white;
+        }
+        footer a { color: #1877f2; text-decoration: none; margin: 0 6px; }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="logo">TrueLink</div>
+    <div class="nav-right">
+        <input type="text" placeholder="Email or Phone">
+        <input type="password" placeholder="Password" style="width:110px;">
+        <button class="btn-login">Log In</button>
+    </div>
+</nav>
+
+<div class="nav-links-bar">
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="profile.html">Search ID</a>
+    <a href="marketplace.html" class="active">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="#">FAQ</a>
+</div>
+
+<div class="page-bar">
+    TrueLink Marketplace — Verified Freelancers Only
+    <span>Zero Platform Cut · TrueLink Certificate on Every Deal</span>
+</div>
+
+<div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="side-box">
+            <div class="side-box-header">Categories</div>
+            <div class="side-box-body">
+                <a href="#design">🎨 Design & Creative</a>
+                <a href="#tech">💻 Tech & Development</a>
+                <a href="#writing">✍️ Writing & Content</a>
+                <a href="#social">📱 Social Media</a>
+                <a href="#business">📊 Business & Finance</a>
+                <a href="#music">🎵 Music & Audio</a>
+                <a href="#photo">📸 Photography</a>
+                <a href="#translate">🌐 Translation</a>
+            </div>
+        </div>
+
+        <div class="side-box">
+            <div class="side-box-header">Filter By Trust</div>
+            <div class="side-box-body">
+                <div class="filter-item">
+                    <input type="checkbox" id="f1" checked>
+                    <label for="f1">✓ Govt ID Verified</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="f2" checked>
+                    <label for="f2">✓ 5+ Reviews</label>
+                </div>
+                <div class="filter-item">
+                    <input type="checkbox" id="f3">
+                    <label for="f3">✓ Zero Disputes</label>
+                </div>
+                <br>
+                <strong>Budget</strong><br>
+                <div class="filter-item">
+                    <input type="radio" name="budget" id="b1" checked>
+                    <label for="b1">All Budgets</label>
+                </div>
+                <div class="filter-item">
+                    <input type="radio" name="budget" id="b2">
+                    <label for="b2">Under ₹1,000</label>
+                </div>
+                <div class="filter-item">
+                    <input type="radio" name="budget" id="b3">
+                    <label for="b3">₹1,000 – ₹5,000</label>
+                </div>
+                <div class="filter-item">
+                    <input type="radio" name="budget" id="b4">
+                    <label for="b4">₹5,000+</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="side-box">
+            <div class="side-box-header">List Your Service</div>
+            <div class="side-box-body">
+                Are you a freelancer?<br>
+                List your service for <strong>free!</strong><br><br>
+                <button class="btn-post-service" onclick="togglePostForm()">+ Post My Service</button>
+            </div>
+        </div>
+
+        <div class="side-box">
+            <div class="side-box-header">How It Works</div>
+            <div class="side-box-body">
+                1. Find a freelancer<br>
+                2. View their profile<br>
+                3. Send a hire request<br>
+                4. Complete the deal<br>
+                5. Get a certificate ✓<br><br>
+                <strong style="color:#1a6e0a;">Zero platform cut!</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- SEARCH BAR -->
+        <div class="search-bar-box">
+            <input type="text" id="searchInput" placeholder="Search skills or services — e.g. Logo Design, Web Development...">
+            <select id="catFilter">
+                <option value="">All Categories</option>
+                <option value="design">Design & Creative</option>
+                <option value="tech">Tech & Development</option>
+                <option value="writing">Writing & Content</option>
+                <option value="social">Social Media</option>
+            </select>
+            <select id="sortFilter">
+                <option>Sort: Best Reviewed</option>
+                <option>Sort: Newest</option>
+                <option>Sort: Price Low to High</option>
+                <option>Sort: Price High to Low</option>
+            </select>
+            <button class="btn-search-market" onclick="searchFreelancers()">Search</button>
+        </div>
+
+        <!-- STATS BAR -->
+        <div class="stats-bar">
+            <span>Showing <strong>5</strong> verified freelancers</span>
+            <span><strong>100%</strong> Government ID Verified</span>
+            <span><strong>Zero</strong> platform cut on earnings</span>
+            <span>TrueLink Certificate on every deal ✓</span>
+        </div>
+
+        <!-- DESIGN CATEGORY -->
+        <div class="cat-header" id="design">🎨 Design & Creative</div>
+
+        <!-- CARD 1 -->
+        <div class="f-card">
+            <div class="f-card-left">
+                <div
