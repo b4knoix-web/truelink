@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueLink — FAQ</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
+        nav {
+            background: #1877f2;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1565d8;
+        }
+        .logo { color: white; font-size: 24px; font-weight: bold; }
+        .nav-right { display: flex; gap: 8px; align-items: center; }
+        .nav-right input { padding: 5px 10px; border: none; border-radius: 3px; font-size: 12px; width: 150px; }
+        .btn-login { padding: 5px 14px; background: white; color: #1877f2; border: none; border-radius: 3px; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .nav-links-bar { background: #1565d8; padding: 5px 20px; display: flex; gap: 20px; }
+        .nav-links-bar a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 12px; }
+        .nav-links-bar a:hover { color: white; }
+        .nav-links-bar a.active { color: white; font-weight: bold; }
+        .page-bar { background: #3b5998; padding: 6px 20px; color: white; font-size: 13px; font-weight: bold; }
+        .main { max-width: 900px; margin: 14px auto; padding: 0 20px; display: flex; gap: 14px; }
+        .sidebar { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+        .side-box { background: white; border: 1px solid #aaa; }
+        .side-box-header { background: #3b5998; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; }
+        .side-box-body { padding: 10px; font-size: 12px; color: #333; line-height: 1.9; }
+        .side-box-body a { color: #1877f2; text-decoration: none; display: block; }
+        .side-box-body a:hover { text-decoration: underline; }
+        .content { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .box { background: white; border: 1px solid #aaa; }
+        .box-header { background: #3b5998; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; }
+        .box-body { padding: 14px; }
+        .faq-item { border-bottom: 1px dotted #ddd; padding: 12px 0; }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-q {
+            font-weight: bold;
+            font-size: 13px;
+            color: #1877f2;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+        }
+        .faq-q:hover { color: #1255b5; }
+        .faq-arrow { font-size: 11px; color: #888; transition: transform 0.2s; }
+        .faq-arrow.open { transform: rotate(180deg); }
+        .faq-a {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.7;
+            margin-top: 8px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #1877f2;
+            display: none;
+        }
+        .faq-a.show { display: block; }
+        .faq-a a { color: #1877f2; text-decoration: none; }
+        .faq-a a:hover { text-decoration: underline; }
+        .contact-box {
+            background: #f0f4ff;
+            border: 1px solid #b0c0e8;
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.8;
+        }
+        .contact-box h3 { color: #1877f2; margin-bottom: 8px; font-size: 14px; }
+        .btn-contact {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 7px 20px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-contact:hover { background: #1255b5; }
+        footer { text-align: center; padding: 20px; color: #888; font-size: 11px; margin-top: 10px; border-top: 1px solid #ddd; background: white; }
+        footer a { color: #1877f2; text-decoration: none; margin: 0 6px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">TrueLink</div>
+    <div class="nav-right">
+        <input type="text" placeholder="Email or Phone">
+        <input type="password" placeholder="Password" style="width:110px;">
+        <button class="btn-login">Log In</button>
+    </div>
+</nav>
+
+<div class="nav-links-bar">
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="profile.html">Search ID</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="faq.html" class="active">FAQ</a>
+</div>
+
+<div class="page-bar">Frequently Asked Questions</div>
+
+<div class="main">
+
+    <div class="sidebar">
+        <div class="side-box">
+            <div class="side-box-header">FAQ Categories</div>
+            <div class="side-box-body">
+                <a href="#general">→ General</a>
+                <a href="#verification">→ Verification</a>
+                <a href="#reviews">→ Reviews</a>
+                <a href="#marketplace">→ Marketplace</a>
+                <a href="#safety">→ Safety</a>
+                <a href="#account">→ Account</a>
+            </div>
+        </div>
+        <div class="side-box">
+            <div class="side-box-header">Quick Links</div>
+            <div class="side-box-body">
+                <a href="signup.html">→ Create My ID</a>
+                <a href="profile.html">→ Search a Profile</a>
+                <a href="review.html">→ Leave a Review</a>
+                <a href="marketplace.html">→ Marketplace</a>
+                <a href="index.html">→ Home</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- GENERAL -->
+        <div class="box" id="general">
+            <div class="box-header">General Questions</div>
+            <div class="box-body">
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        What is TrueLink? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        TrueLink is a Universal Trust ID platform. Every person gets a unique verified ID (e.g. TL-4829-XK) that they can share on any platform — Instagram, OLX, WhatsApp, Fiverr — anywhere. It lets others verify who they are dealing with before sending money or hiring someone online.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        Is TrueLink free? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Yes! Creating a TrueLink ID is completely free. Basic verification (phone + email) is free. Government ID verification is also free during our launch period.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        How is TrueLink different from LinkedIn or Aadhaar? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        LinkedIn is only for professionals. Aadhaar only works in India and has no trust score. TrueLink works for every person, on every platform, globally. It includes proof-based reviews, deal certificates, and a freelancer marketplace — all in one place.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        Where can I use my TrueLink ID? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Anywhere! Add it to your Instagram bio, OLX profile, WhatsApp status, business card, email signature, Fiverr profile — anywhere you interact with people online. Others can search your ID on TrueLink to verify you instantly.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VERIFICATION -->
+        <div class="box" id="verification">
+            <div class="box-header">Verification Questions</div>
+            <div class="box-body">
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        What documents are needed for verification? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        You can verify with any one of these: Aadhaar Card, PAN Card, Passport, or Voter ID. The document is only used for verification — it is never shared with anyone.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        Is my government ID safe? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Yes. Your ID is encrypted and stored securely. We only use it to verify your identity — we never sell your data or share it with third parties. Your privacy is our priority.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        How long does verification take? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Phone and email verification is instant. Government ID verification takes up to 24 hours. Once verified, your profile shows a "✓ Government ID Verified" badge.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- REVIEWS -->
+        <div class="box" id="reviews">
+            <div class="box-header">Review Questions</div>
+            <div class="box-body">
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        How do I leave a review? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Go to <a href="review.html">Leave a Review</a>. Search the person's TrueLink ID, give a star rating, write your experience, and upload proof (payment screenshot, chat history, or receipt). Our system verifies the proof automatically.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        Why is proof required for reviews? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        To prevent fake reviews. Anyone can write anything — but proof shows it actually happened. This makes TrueLink reviews trustworthy unlike other platforms where fake reviews are common.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        What if someone leaves a fake review on my profile? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Our system blocks fake reviews automatically. If a fake review gets through, you can report it. We will investigate within 24 hours and remove it if found fake. The person who submitted the fake review will face account suspension.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MARKETPLACE -->
+        <div class="box" id="marketplace">
+            <div class="box-header">Marketplace Questions</div>
+            <div class="box-body">
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        How is TrueLink Marketplace different from Fiverr? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Fiverr takes 20% of every payment. TrueLink takes zero platform cut — you keep 100% of your earnings. We only charge a small fee (1-2%) for the payment witness service when used. Plus every freelancer is Government ID verified.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        How do I list my service on the marketplace? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Go to <a href="marketplace.html">Marketplace</a> and click "+ Post My Service". Fill in your TrueLink ID, service title, description, and starting price. Your listing goes live after verification within 24 hours.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SAFETY -->
+        <div class="box" id="safety">
+            <div class="box-header">Safety Questions</div>
+            <div class="box-body">
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        What is a TrueLink Deal Certificate? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        After every completed deal, both parties receive a TrueLink Deal Certificate with a unique ID. This certificate is legal evidence of the transaction and can be used in case of any future dispute.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggle(this)">
+                        What happens if someone scams me? <span class="faq-arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        Report the person on their profile page. Submit your proof (payment screenshot, chat history). Our team will review within 24 hours. A verified bad review will appear on their profile permanently, warning others. Repeat scammers get permanently banned.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- CONTACT -->
+        <div class="box">
+            <div class="box-header">Still Have Questions?</div>
+            <div class="box-body">
+                <div class="contact-box">
+                    <h3>We are here to help!</h3>
+                    Can't find your answer above? Contact our support team.<br>
+                    We respond within 24 hours.<br>
+                    <a href="mailto:support@truelink.qzz.io" class="btn-contact">Contact Support →</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<footer>
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="profile.html">Search ID</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms</a>
+    <br><br>
+    © 2026 TrueLink · Trust. Verified.
+</footer>
+
+<script>
+    function toggle(el) {
+        const answer = el.nextElementSibling;
+        const arrow = el.querySelector('.faq-arrow');
+        answer.classList.toggle('show');
+        arrow.classList.toggle('open');
+    }
+</script>
+
+</body>
+</html>
