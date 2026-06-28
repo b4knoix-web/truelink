@@ -4,133 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrueLink — Create Your ID</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
-
-        nav {
-            background: #1877f2;
-            padding: 8px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #1565d8;
-        }
-        .logo { color: white; font-size: 22px; font-weight: bold; letter-spacing: 1px; }
+        nav { background: #1877f2; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1565d8; }
+        .logo { color: white; font-size: 22px; font-weight: bold; }
         .nav-right { display: flex; gap: 8px; align-items: center; }
         .nav-right input { padding: 5px 10px; border: none; border-radius: 3px; font-size: 12px; width: 150px; }
         .btn-login { padding: 5px 14px; background: white; color: #1877f2; border: none; border-radius: 3px; font-size: 12px; font-weight: bold; cursor: pointer; }
-        .btn-login:hover { background: #e8f0fe; }
-
         .nav-links-bar { background: #1565d8; padding: 5px 20px; display: flex; gap: 20px; }
         .nav-links-bar a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 12px; }
-        .nav-links-bar a:hover { color: white; text-decoration: underline; }
+        .nav-links-bar a:hover { color: white; }
         .nav-links-bar a.active { color: white; font-weight: bold; }
-
         .page-bar { background: #3b5998; padding: 6px 20px; color: white; font-size: 13px; font-weight: bold; }
-
-        .main {
-            display: flex;
-            max-width: 900px;
-            margin: 30px auto;
-            gap: 40px;
-            align-items: flex-start;
-            padding: 0 20px;
-        }
-
+        .main { display: flex; max-width: 900px; margin: 30px auto; gap: 40px; align-items: flex-start; padding: 0 20px; }
         .left { flex: 1; }
         .left h1 { font-size: 24px; font-weight: normal; color: #1c1e21; line-height: 1.5; margin-bottom: 20px; }
         .left h1 strong { color: #1877f2; }
-
         .info-box { background: white; border: 1px solid #aaa; margin-bottom: 10px; }
         .info-box-header { background: #3b5998; color: white; padding: 4px 10px; font-size: 12px; font-weight: bold; }
         .info-box-body { padding: 10px; font-size: 12px; color: #333; line-height: 2; }
         .info-box-body .point { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
         .info-box-body .point .ico { font-size: 18px; flex-shrink: 0; }
         .info-box-body .point strong { display: block; color: #000; }
-
-        /* CARD */
         .signup-card { width: 360px; flex-shrink: 0; background: white; border: 1px solid #aaa; box-shadow: 2px 2px 6px rgba(0,0,0,0.12); }
         .card-header { background: #3b5998; color: white; padding: 12px 16px; }
         .card-header h2 { font-size: 18px; margin-bottom: 2px; }
         .card-header p { font-size: 11px; opacity: 0.85; }
         .card-body { padding: 16px; }
-
-        /* STEP BAR — 3 steps now */
         .step-bar { display: flex; align-items: center; margin-bottom: 16px; }
         .step-item { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
-        .step-circle {
-            width: 26px; height: 26px; border-radius: 50%;
-            background: #ddd; color: #888;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 11px; font-weight: bold; border: 2px solid #ddd;
-        }
+        .step-circle { width: 26px; height: 26px; border-radius: 50%; background: #ddd; color: #888; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid #ddd; }
         .step-circle.active { background: #1877f2; color: white; border-color: #1877f2; }
         .step-circle.done { background: #42b72a; color: white; border-color: #42b72a; }
         .step-label { font-size: 9px; color: #888; text-align: center; }
         .step-label.active { color: #1877f2; font-weight: bold; }
         .step-line { flex: 1; height: 2px; background: #ddd; margin-bottom: 14px; }
         .step-line.done { background: #42b72a; }
-
-        /* MSG */
         .msg { padding: 7px 10px; font-size: 11px; margin-bottom: 10px; border-radius: 3px; display: none; }
         .msg.error { background: #fde8e8; border: 1px solid #cc0000; color: #cc0000; display: block; }
         .msg.success { background: #e8f5e9; border: 1px solid #42b72a; color: #1a6e0a; display: block; }
-
-        /* INPUTS */
         .row2 { display: flex; gap: 8px; }
         .row2 input { flex: 1; }
-
-        input[type="text"], input[type="email"], input[type="password"], input[type="number"] {
-            width: 100%; padding: 8px 10px; border: 1px solid #aaa;
-            font-size: 13px; margin-bottom: 8px; font-family: Arial; outline: none;
-        }
+        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 8px 10px; border: 1px solid #aaa; font-size: 13px; margin-bottom: 8px; font-family: Arial; outline: none; }
         input:focus { border-color: #1877f2; }
-
         .gender-row { display: flex; gap: 16px; margin-bottom: 10px; font-size: 12px; }
         .gender-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
         .gender-row input { width: auto; margin: 0; }
-
         .terms-row { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: #555; margin-bottom: 12px; line-height: 1.5; }
         .terms-row input { width: auto; margin-top: 2px; }
         .terms-row a { color: #1877f2; text-decoration: none; }
-
-        /* OTP */
-        .otp-row { display: flex; gap: 6px; margin-bottom: 8px; }
-        .otp-row input { flex: 1; margin-bottom: 0; }
-        .btn-otp { padding: 8px 10px; background: #1877f2; color: white; border: none; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .btn-otp:hover { background: #1255b5; }
-        .btn-otp:disabled { background: #aaa; cursor: not-allowed; }
-        .otp-hint { background: #f0f4ff; border: 1px solid #b0c0e8; padding: 6px 10px; font-size: 11px; color: #333; margin-bottom: 10px; display: none; }
-
-        /* BUTTONS */
         .btn-continue { width: 100%; padding: 10px; background: #42b72a; color: white; border: 1px solid #2d8a1a; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         .btn-continue:hover { background: #36a420; }
+        .btn-continue:disabled { background: #aaa; cursor: not-allowed; }
         .btn-back { background: none; border: none; color: #1877f2; font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; }
-
         hr { border: none; border-top: 1px solid #ddd; margin: 10px 0; }
         .bottom-link { text-align: center; font-size: 12px; color: #555; }
         .bottom-link a { color: #1877f2; text-decoration: none; font-weight: bold; }
-
         .form-section { display: none; }
         .form-section.active { display: block; }
-
-        /* SUCCESS */
+        .otp-row { display: flex; gap: 6px; margin-bottom: 8px; }
+        .otp-row input { flex: 1; margin-bottom: 0; }
+        .btn-otp { padding: 8px 10px; background: #1877f2; color: white; border: none; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .btn-otp:disabled { background: #aaa; cursor: not-allowed; }
+        .otp-hint { background: #f0f4ff; border: 1px solid #b0c0e8; padding: 6px 10px; font-size: 11px; color: #333; margin-bottom: 10px; display: none; }
         .success-card { background: #e8f5e9; border: 1px solid #42b72a; padding: 16px; text-align: center; margin-bottom: 12px; }
         .success-card h3 { color: #1a6e0a; font-size: 16px; margin-bottom: 6px; }
-        .tl-id-display {
-            font-size: 24px; font-weight: bold; color: #1877f2;
-            letter-spacing: 3px; margin: 10px 0;
-            background: white; border: 2px solid #1877f2; padding: 8px;
-        }
+        .tl-id-display { font-size: 22px; font-weight: bold; color: #1877f2; letter-spacing: 3px; margin: 10px 0; background: white; border: 2px solid #1877f2; padding: 8px; }
         .success-card p { font-size: 11px; color: #555; line-height: 1.6; }
-
         .next-steps { background: #f0f4ff; border: 1px solid #b0c0e8; padding: 10px 12px; font-size: 12px; line-height: 2; margin-bottom: 12px; color: #333; }
-
-        /* TRUST SCORE INFO */
-        .trust-info { background: #f9f9f9; border: 1px solid #ddd; padding: 10px 12px; font-size: 11px; color: #555; line-height: 1.8; margin-bottom: 10px; }
-        .trust-info strong { color: #000; }
-
         footer { text-align: center; padding: 20px; color: #888; font-size: 11px; margin-top: 20px; }
         footer a { color: #1877f2; text-decoration: none; margin: 0 6px; }
     </style>
@@ -140,9 +83,9 @@
 <nav>
     <div class="logo">TrueLink</div>
     <div class="nav-right">
-        <input type="text" placeholder="Email or Phone">
-        <input type="password" placeholder="Password" style="width:110px;">
-        <button class="btn-login" onclick="window.location.href='profile.html'">Log In</button>
+        <input type="text" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password" style="width:110px;">
+        <button class="btn-login" onclick="loginUser()">Log In</button>
     </div>
 </nav>
 
@@ -158,50 +101,18 @@
 <div class="page-bar">Sign Up — Create Your TrueLink ID</div>
 
 <div class="main">
-
-    <!-- LEFT -->
     <div class="left">
         <h1>Join TrueLink and build your <strong>Trust Score</strong> online.</h1>
-
         <div class="info-box">
             <div class="info-box-header">Why TrueLink?</div>
             <div class="info-box-body">
-                <div class="point">
-                    <span class="ico">⭐</span>
-                    <span><strong>Trust Score</strong>Built from real verified reviews — people can see how trustworthy you are.</span>
-                </div>
-                <div class="point">
-                    <span class="ico">🔍</span>
-                    <span><strong>Searchable Profile</strong>Anyone can search your TrueLink ID and instantly see your trust history.</span>
-                </div>
-                <div class="point">
-                    <span class="ico">📜</span>
-                    <span><strong>Proof-Based Reviews</strong>Every review needs proof — no fake ratings allowed.</span>
-                </div>
-                <div class="point">
-                    <span class="ico">💼</span>
-                    <span><strong>Freelancer Marketplace</strong>Get hired faster — verified profiles get more work.</span>
-                </div>
-                <div class="point">
-                    <span class="ico">🌍</span>
-                    <span><strong>Works Everywhere</strong>Add your TrueLink ID to Instagram, OLX, WhatsApp — anywhere.</span>
-                </div>
+                <div class="point"><span class="ico">⭐</span><span><strong>Trust Score</strong>Built from real verified reviews.</span></div>
+                <div class="point"><span class="ico">🔍</span><span><strong>Searchable Profile</strong>Anyone can search your TrueLink ID.</span></div>
+                <div class="point"><span class="ico">📜</span><span><strong>Proof-Based Reviews</strong>Every review needs proof — no fakes.</span></div>
+                <div class="point"><span class="ico">💼</span><span><strong>Freelancer Marketplace</strong>Get hired faster with a verified profile.</span></div>
+                <div class="point"><span class="ico">🌍</span><span><strong>Works Everywhere</strong>Add your ID to Instagram, OLX, WhatsApp.</span></div>
             </div>
         </div>
-
-        <div class="info-box">
-            <div class="info-box-header">How Your Trust Score Works</div>
-            <div class="info-box-body">
-                Your Trust Score starts at 0 and grows with every verified review.<br><br>
-                <strong>More reviews = Higher score = More trust</strong><br><br>
-                ⭐ 0 reviews — New Member<br>
-                ⭐⭐ 1-5 reviews — Building Trust<br>
-                ⭐⭐⭐ 6-15 reviews — Trusted Member<br>
-                ⭐⭐⭐⭐ 16-30 reviews — Highly Trusted<br>
-                ⭐⭐⭐⭐⭐ 30+ reviews — Top Trusted
-            </div>
-        </div>
-
         <div class="info-box">
             <div class="info-box-header">How Sign Up Works</div>
             <div class="info-box-body">
@@ -213,15 +124,12 @@
         </div>
     </div>
 
-    <!-- RIGHT — SIGNUP CARD -->
     <div class="signup-card">
         <div class="card-header">
             <h2>Create Your TrueLink ID</h2>
             <p>Free forever. Takes 2 minutes.</p>
         </div>
         <div class="card-body">
-
-            <!-- STEP INDICATOR — 3 steps -->
             <div class="step-bar">
                 <div class="step-item">
                     <div class="step-circle active" id="c1">1</div>
@@ -235,13 +143,13 @@
                 <div class="step-line" id="line2"></div>
                 <div class="step-item">
                     <div class="step-circle" id="c3">3</div>
-                    <div class="step-label" id="l3">Your ID Ready!</div>
+                    <div class="step-label" id="l3">ID Ready!</div>
                 </div>
             </div>
 
             <div class="msg" id="msg"></div>
 
-            <!-- STEP 1 — BASIC INFO -->
+            <!-- STEP 1 -->
             <div class="form-section active" id="sec1">
                 <div class="row2">
                     <input type="text" id="firstName" placeholder="First Name">
@@ -251,75 +159,56 @@
                 <input type="email" id="emailConfirm" placeholder="Re-enter Email Address">
                 <input type="password" id="password" placeholder="Password (min 8 characters)">
                 <input type="text" id="phone" placeholder="Mobile Number (10 digits)">
-
                 <div class="gender-row">
                     <label><input type="radio" name="gender" value="male"> Male</label>
                     <label><input type="radio" name="gender" value="female"> Female</label>
                     <label><input type="radio" name="gender" value="other"> Other</label>
                 </div>
-
                 <div class="terms-row">
                     <input type="checkbox" id="terms">
-                    <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. My data will never be sold.</label>
+                    <label for="terms">I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>. My data will never be sold.</label>
                 </div>
-
                 <button class="btn-continue" onclick="step1Next()">Continue →</button>
                 <hr>
-                <div class="bottom-link">Already have an ID? <a href="profile.html">Log In</a></div>
+                <div class="bottom-link">Already have an ID? <a href="#" onclick="showLogin()">Log In</a></div>
             </div>
 
-            <!-- STEP 2 — PHONE OTP -->
+            <!-- STEP 2 -->
             <div class="form-section" id="sec2">
                 <p style="font-size:12px; color:#333; margin-bottom:12px; line-height:1.7;">
-                    We will send an OTP to verify your phone number:<br>
+                    Enter the OTP sent to:<br>
                     <strong id="phoneShow" style="color:#1877f2;"></strong>
                 </p>
-
                 <div class="otp-row">
                     <input type="text" id="otpInput" placeholder="Enter 6-digit OTP" maxlength="6">
                     <button class="btn-otp" id="otpBtn" onclick="sendOTP()">Send OTP</button>
                 </div>
-
                 <div class="otp-hint" id="otpHint">
-                    ✓ OTP Sent! For demo, enter: <strong>123456</strong>
+                    ✓ OTP Sent! Demo OTP: <strong>123456</strong>
                 </div>
-
-                <p id="timerText" style="font-size:11px; color:#888; margin-bottom:10px; display:none;">
-                    Resend OTP in <strong id="timerNum">30</strong>s
+                <p id="timerText" style="font-size:11px;color:#888;margin-bottom:10px;display:none;">
+                    Resend in <strong id="timerNum">30</strong>s
                 </p>
-
-                <div class="trust-info">
-                    <strong>After verification you will get:</strong><br>
-                    ✓ Your unique TrueLink ID (e.g. TL-4829-XK)<br>
-                    ✓ A searchable public profile<br>
-                    ✓ Trust Score starts building from your first review
-                </div>
-
-                <button class="btn-continue" onclick="step2Next()">Verify & Get My ID →</button>
+                <button class="btn-continue" id="verifyBtn" onclick="step2Next()">Verify & Get My ID →</button>
                 <hr>
                 <button class="btn-back" onclick="goStep(1)">← Back</button>
             </div>
 
-            <!-- STEP 3 — ID READY -->
+            <!-- STEP 3 -->
             <div class="form-section" id="sec3">
                 <div class="success-card">
                     <h3>🎉 Your TrueLink ID is Ready!</h3>
                     <div class="tl-id-display" id="generatedID"></div>
-                    <p>Save this ID — share it on Instagram, OLX, WhatsApp, anywhere you want to build trust.</p>
+                    <p>Share this ID on Instagram, OLX, WhatsApp — anywhere!</p>
                 </div>
-
                 <div class="next-steps">
                     <strong>What happens next:</strong><br>
                     ✓ Your profile is now live and searchable<br>
-                    ✓ Share your ID — let people search and verify you<br>
+                    ✓ Share your ID — let people verify you<br>
                     ✓ Ask clients to leave verified reviews<br>
-                    ✓ Your Trust Score grows with every review<br>
-                    ✓ List your services on the Marketplace
+                    ✓ Your Trust Score grows with every review
                 </div>
-
-                <button class="btn-continue" onclick="window.location.href='profile.html'">
-                    View My Profile →
-                </button>
+                <button class="btn-continue" onclick="window.location.href='profile.html'">View My Profile →</button>
                 <hr>
                 <div class="bottom-link">
                     <a href="marketplace.html">Browse Marketplace</a> &nbsp;|&nbsp;
@@ -342,92 +231,168 @@
 </footer>
 
 <script>
-    let otpSent = false;
+    // ⚠️ YAHAN APNI KEYS DAALO
+    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
+
+    const { createClient } = supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    let otpSent = false
+    let userData = {}
 
     function showMsg(text, type) {
-        const el = document.getElementById('msg');
-        el.textContent = text;
-        el.className = 'msg ' + type;
-        setTimeout(() => { el.className = 'msg'; el.textContent = ''; }, 3500);
+        const el = document.getElementById('msg')
+        el.textContent = text
+        el.className = 'msg ' + type
+        setTimeout(() => { el.className = 'msg'; el.textContent = ''; }, 4000)
     }
 
     function goStep(n) {
         for (let i = 1; i <= 3; i++) {
-            document.getElementById('sec' + i).classList.remove('active');
-            document.getElementById('c' + i).className = 'step-circle';
-            document.getElementById('l' + i).className = 'step-label';
-            if (i < 3) document.getElementById('line' + i).className = 'step-line';
+            document.getElementById('sec' + i).classList.remove('active')
+            document.getElementById('c' + i).className = 'step-circle'
+            document.getElementById('l' + i).className = 'step-label'
+            if (i < 3) document.getElementById('line' + i).className = 'step-line'
         }
         for (let i = 1; i < n; i++) {
-            document.getElementById('c' + i).className = 'step-circle done';
-            document.getElementById('c' + i).textContent = '✓';
-            if (i < 3) document.getElementById('line' + i).className = 'step-line done';
+            document.getElementById('c' + i).className = 'step-circle done'
+            document.getElementById('c' + i).textContent = '✓'
+            if (i < 3) document.getElementById('line' + i).className = 'step-line done'
         }
-        document.getElementById('sec' + n).classList.add('active');
-        document.getElementById('c' + n).className = 'step-circle active';
-        document.getElementById('l' + n).className = 'step-label active';
+        document.getElementById('sec' + n).classList.add('active')
+        document.getElementById('c' + n).className = 'step-circle active'
+        document.getElementById('l' + n).className = 'step-label active'
     }
 
     function step1Next() {
-        const first = document.getElementById('firstName').value.trim();
-        const last = document.getElementById('lastName').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const emailC = document.getElementById('emailConfirm').value.trim();
-        const pass = document.getElementById('password').value;
-        const phone = document.getElementById('phone').value.trim();
-        const gender = document.querySelector('input[name="gender"]:checked');
-        const terms = document.getElementById('terms').checked;
+        const first = document.getElementById('firstName').value.trim()
+        const last = document.getElementById('lastName').value.trim()
+        const email = document.getElementById('email').value.trim()
+        const emailC = document.getElementById('emailConfirm').value.trim()
+        const pass = document.getElementById('password').value
+        const phone = document.getElementById('phone').value.trim()
+        const gender = document.querySelector('input[name="gender"]:checked')
+        const terms = document.getElementById('terms').checked
 
         if (!first || !last) { showMsg('Please enter your full name.', 'error'); return; }
-        if (!email || !email.includes('@')) { showMsg('Please enter a valid email address.', 'error'); return; }
-        if (email !== emailC) { showMsg('Email addresses do not match.', 'error'); return; }
+        if (!email || !email.includes('@')) { showMsg('Please enter a valid email.', 'error'); return; }
+        if (email !== emailC) { showMsg('Emails do not match.', 'error'); return; }
         if (pass.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); return; }
         if (phone.length !== 10 || isNaN(phone)) { showMsg('Please enter a valid 10-digit phone number.', 'error'); return; }
         if (!gender) { showMsg('Please select your gender.', 'error'); return; }
-        if (!terms) { showMsg('Please agree to the Terms and Privacy Policy.', 'error'); return; }
+        if (!terms) { showMsg('Please agree to Terms and Privacy Policy.', 'error'); return; }
 
-        document.getElementById('phoneShow').textContent = '+91 ' + phone;
-        goStep(2);
+        userData = { first, last, email, pass, phone, gender: gender.value }
+        document.getElementById('phoneShow').textContent = '+91 ' + phone
+        goStep(2)
     }
 
     function sendOTP() {
-        const btn = document.getElementById('otpBtn');
-        btn.disabled = true;
-        btn.textContent = 'Sent!';
-        otpSent = true;
-        document.getElementById('otpHint').style.display = 'block';
+        const btn = document.getElementById('otpBtn')
+        btn.disabled = true
+        btn.textContent = 'Sent!'
+        otpSent = true
+        document.getElementById('otpHint').style.display = 'block'
 
-        let t = 30;
-        const timerText = document.getElementById('timerText');
-        const timerNum = document.getElementById('timerNum');
-        timerText.style.display = 'block';
+        let t = 30
+        const timerText = document.getElementById('timerText')
+        const timerNum = document.getElementById('timerNum')
+        timerText.style.display = 'block'
         const interval = setInterval(() => {
-            t--;
-            timerNum.textContent = t;
+            t--
+            timerNum.textContent = t
             if (t <= 0) {
-                clearInterval(interval);
-                timerText.style.display = 'none';
-                btn.disabled = false;
-                btn.textContent = 'Resend OTP';
+                clearInterval(interval)
+                timerText.style.display = 'none'
+                btn.disabled = false
+                btn.textContent = 'Resend OTP'
             }
-        }, 1000);
+        }, 1000)
     }
 
-    function step2Next() {
+    async function step2Next() {
         if (!otpSent) { showMsg('Please click Send OTP first.', 'error'); return; }
-        const otp = document.getElementById('otpInput').value.trim();
-        if (otp !== '123456') { showMsg('Incorrect OTP. Please try again. (Demo: 123456)', 'error'); return; }
+        const otp = document.getElementById('otpInput').value.trim()
+        if (otp !== '123456') { showMsg('Incorrect OTP. Demo OTP is 123456.', 'error'); return; }
 
-        // Generate TrueLink ID
-        const num = Math.floor(1000 + Math.random() * 9000);
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const let1 = letters[Math.floor(Math.random() * 26)];
-        const let2 = letters[Math.floor(Math.random() * 26)];
-        const tlID = 'TL-' + num + '-' + let1 + let2;
+        const btn = document.getElementById('verifyBtn')
+        btn.disabled = true
+        btn.textContent = 'Creating your ID...'
 
-        document.getElementById('generatedID').textContent = tlID;
-        showMsg('Phone verified! Your TrueLink ID is ready! ✓', 'success');
-        setTimeout(() => goStep(3), 1000);
+        try {
+            // Generate TrueLink ID
+            const num = Math.floor(1000 + Math.random() * 9000)
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            const l1 = letters[Math.floor(Math.random() * 26)]
+            const l2 = letters[Math.floor(Math.random() * 26)]
+            const tlID = 'TL-' + num + '-' + l1 + l2
+
+            // Save to Supabase Auth
+            const { data, error } = await db.auth.signUp({
+                email: userData.email,
+                password: userData.pass,
+                options: {
+                    data: {
+                        first_name: userData.first,
+                        last_name: userData.last,
+                        phone: userData.phone,
+                        gender: userData.gender,
+                        truelink_id: tlID
+                    }
+                }
+            })
+
+            if (error) {
+                showMsg('Error: ' + error.message, 'error')
+                btn.disabled = false
+                btn.textContent = 'Verify & Get My ID →'
+                return
+            }
+
+            // Save to users table
+            await db.from('Truelink').insert({
+                email: userData.email,
+                first_name: userData.first,
+                last_name: userData.last,
+                phone: userData.phone,
+                gender: userData.gender,
+                truelink_id: tlID,
+                trust_score: 0,
+                review_count: 0
+            })
+
+            document.getElementById('generatedID').textContent = tlID
+            showMsg('Account created successfully! ✓', 'success')
+            setTimeout(() => goStep(3), 1000)
+
+        } catch (err) {
+            showMsg('Something went wrong. Please try again.', 'error')
+            btn.disabled = false
+            btn.textContent = 'Verify & Get My ID →'
+        }
+    }
+
+    async function loginUser() {
+        const email = document.getElementById('loginEmail').value.trim()
+        const pass = document.getElementById('loginPassword').value
+
+        if (!email || !pass) { alert('Please enter email and password.'); return; }
+
+        const { data, error } = await db.auth.signInWithPassword({ email, password: pass })
+
+        if (error) {
+            alert('Login failed: ' + error.message)
+            return
+        }
+
+        alert('Login successful! Welcome back.')
+        window.location.href = 'profile.html'
+    }
+
+    function showLogin() {
+        document.getElementById('loginEmail').focus()
+        window.scrollTo(0, 0)
     }
 </script>
 
