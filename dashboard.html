@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueLink — My Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
+
+        nav { background: #1877f2; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1565d8; }
+        .logo { color: white; font-size: 24px; font-weight: bold; }
+        .nav-right { display: flex; gap: 8px; align-items: center; }
+        .nav-user { color: white; font-size: 12px; }
+        .btn-logout { padding: 5px 14px; background: #cc0000; color: white; border: none; border-radius: 3px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+        .nav-links-bar { background: #1565d8; padding: 5px 20px; display: flex; gap: 20px; }
+        .nav-links-bar a { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 12px; }
+        .nav-links-bar a:hover { color: white; text-decoration: underline; }
+        .nav-links-bar a.active { color: white; font-weight: bold; }
+
+        .page-bar { background: #3b5998; padding: 6px 20px; color: white; font-size: 13px; font-weight: bold; }
+
+        .main { display: flex; max-width: 900px; margin: 20px auto; gap: 14px; align-items: flex-start; padding: 0 20px; }
+
+        /* SIDEBAR */
+        .sidebar { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
+        .side-box { background: white; border: 1px solid #aaa; }
+        .side-box-header { background: #3b5998; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; }
+        .side-box-body { padding: 10px; font-size: 12px; color: #333; line-height: 1.9; }
+        .side-box-body a { color: #1877f2; text-decoration: none; display: block; }
+        .side-box-body a:hover { text-decoration: underline; }
+
+        /* PROFILE PICTURE BOX */
+        .pic-box { background: white; border: 1px solid #aaa; }
+        .pic-box-header { background: #3b5998; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; }
+        .pic-box-body { padding: 14px; text-align: center; }
+        .profile-pic-display {
+            width: 120px; height: 120px;
+            background: #dde;
+            border: 3px solid #1877f2;
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 56px;
+            margin: 0 auto 10px;
+            overflow: hidden;
+        }
+        .profile-pic-display img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-change-pic {
+            padding: 5px 14px;
+            background: #e8f0fe;
+            color: #1877f2;
+            border: 1px solid #b0c0e8;
+            font-size: 11px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .pic-input { display: none; }
+        .pic-name { font-size: 14px; font-weight: bold; margin-bottom: 2px; }
+        .pic-id { font-size: 12px; color: #1877f2; font-weight: bold; margin-bottom: 4px; }
+        .pic-since { font-size: 11px; color: #888; }
+
+        /* TRUST SCORE SIDEBAR */
+        .trust-mini { padding: 10px; background: #f0f4ff; border-top: 1px solid #ddd; text-align: center; }
+        .trust-mini .stars { font-size: 18px; color: #f4a000; }
+        .trust-mini .label { font-size: 12px; font-weight: bold; color: #1877f2; }
+        .trust-mini .sub { font-size: 10px; color: #888; }
+
+        /* CONTENT */
+        .content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+
+        /* MSG */
+        .msg { padding: 8px 12px; font-size: 12px; border-radius: 3px; display: none; margin-bottom: 6px; }
+        .msg.success { background: #e8f5e9; border: 1px solid #42b72a; color: #1a6e0a; display: block; }
+        .msg.error { background: #fde8e8; border: 1px solid #cc0000; color: #cc0000; display: block; }
+
+        /* BOXES */
+        .box { background: white; border: 1px solid #aaa; }
+        .box-header { background: #3b5998; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .box-body { padding: 14px; }
+
+        /* FORM */
+        .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .form-row .field { flex: 1; }
+        .field { margin-bottom: 10px; }
+        .field label { display: block; font-weight: bold; font-size: 12px; color: #333; margin-bottom: 3px; }
+        .field label .optional { font-weight: normal; color: #888; font-size: 10px; }
+        .field input, .field select, .field textarea {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #aaa;
+            font-size: 12px;
+            font-family: Arial;
+            outline: none;
+        }
+        .field input:focus, .field select:focus, .field textarea:focus { border-color: #1877f2; }
+        .field textarea { resize: vertical; }
+
+        .section-divider {
+            font-size: 11px;
+            font-weight: bold;
+            color: #3b5998;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* SAVE BUTTON */
+        .btn-save {
+            padding: 7px 24px;
+            background: #42b72a;
+            color: white;
+            border: 1px solid #2d8a1a;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-save:hover { background: #36a420; }
+
+        /* TrueLink ID DISPLAY */
+        .tlid-box {
+            background: #f0f4ff;
+            border: 1px solid #b0c0e8;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tlid-box .tlid { font-size: 18px; font-weight: bold; color: #1877f2; letter-spacing: 2px; }
+        .tlid-box .tlid-label { font-size: 11px; color: #888; }
+        .btn-copy-id {
+            padding: 5px 14px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* NOT LOGGED IN */
+        .not-logged-in { background: white; border: 1px solid #aaa; padding: 40px; text-align: center; }
+        .not-logged-in h3 { font-size: 16px; margin-bottom: 10px; color: #333; }
+        .not-logged-in p { font-size: 13px; color: #666; margin-bottom: 16px; }
+        .btn-go { padding: 8px 24px; background: #1877f2; color: white; border: none; font-size: 13px; font-weight: bold; cursor: pointer; margin: 4px; }
+
+        /* RELATIONSHIP OPTIONS */
+        .rel-options { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+        .rel-btn {
+            padding: 5px 12px;
+            border: 1px solid #aaa;
+            background: #f2f2f2;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+        .rel-btn.selected { background: #e8f0fe; border-color: #1877f2; color: #1877f2; font-weight: bold; }
+
+        footer { text-align: center; padding: 20px; color: #888; font-size: 11px; margin-top: 10px; border-top: 1px solid #ddd; background: white; }
+        footer a { color: #1877f2; text-decoration: none; margin: 0 6px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo">TrueLink</div>
+    <div class="nav-right" id="navRight">
+        <span class="nav-user" id="navUser">Loading...</span>
+        <button class="btn-logout" onclick="logoutUser()">Log Out</button>
+    </div>
+</nav>
+
+<div class="nav-links-bar">
+    <a href="index.html">Home</a>
+    <a href="signup.html">Sign Up</a>
+    <a href="profile.html">Search ID</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="faq.html">FAQ</a>
+    <a href="dashboard.html" class="active">My Dashboard</a>
+</div>
+
+<div class="page-bar">My Dashboard — Edit My Profile</div>
+
+<div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <!-- PROFILE PICTURE -->
+        <div class="pic-box">
+            <div class="pic-box-header">My Profile</div>
+            <div class="pic-box-body">
+                <div class="profile-pic-display" id="picDisplay">👤</div>
+                <input type="file" class="pic-input" id="picInput" accept="image/*" onchange="previewPic(this)">
+                <button class="btn-change-pic" onclick="document.getElementById('picInput').click()">📷 Change Photo</button>
+                <div class="pic-name" id="sidebarName">—</div>
+                <div class="pic-id" id="sidebarID">—</div>
+                <div class="pic-since" id="sidebarSince">—</div>
+            </div>
+            <div class="trust-mini">
+                <div class="stars" id="sidebarStars">☆☆☆☆☆</div>
+                <div class="label" id="sidebarScore">New Member</div>
+                <div class="sub">Trust Score</div>
+            </div>
+        </div>
+
+        <!-- NAV LINKS -->
+        <div class="side-box">
+            <div class="side-box-header">Dashboard</div>
+            <div class="side-box-body">
+                <a href="dashboard.html">→ Edit My Profile</a>
+                <a href="profile.html">→ Search Profiles</a>
+                <a href="marketplace.html">→ Marketplace</a>
+                <a href="review.html">→ Leave Review</a>
+                <a href="index.html">→ Home</a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="mainContent">
+
+        <!-- NOT LOGGED IN STATE -->
+        <div class="not-logged-in" id="notLoggedIn" style="display:none;">
+            <h3>🔒 Please Log In</h3>
+            <p>You need to be logged in to access your dashboard.</p>
+            <button class="btn-go" onclick="window.location.href='signup.html'">Create Account</button>
+            <button class="btn-go" onclick="window.location.href='profile.html'">Log In</button>
+        </div>
+
+        <!-- LOGGED IN CONTENT -->
+        <div id="loggedInContent" style="display:none;">
+
+            <!-- TRUELINK ID -->
+            <div class="box">
+                <div class="box-header">My TrueLink ID</div>
+                <div class="box-body">
+                    <div class="tlid-box">
+                        <div>
+                            <div class="tlid-label">Your Verified Trust ID</div>
+                            <div class="tlid" id="myTLID">—</div>
+                        </div>
+                        <button class="btn-copy-id" onclick="copyID()">📋 Copy ID</button>
+                    </div>
+                    <p style="font-size:11px; color:#888; margin-top:8px;">
+                        Share this ID on Instagram, OLX, WhatsApp — anywhere you want to build trust online.
+                    </p>
+                </div>
+            </div>
+
+            <div class="msg" id="msg"></div>
+
+            <!-- BASIC INFO -->
+            <div class="box">
+                <div class="box-header">
+                    Basic Information
+                    <button class="btn-save" onclick="saveBasicInfo()">Save Changes</button>
+                </div>
+                <div class="box-body">
+                    <div class="section-divider">Name & Identity</div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label>First Name</label>
+                            <input type="text" id="firstName" placeholder="First Name">
+                        </div>
+                        <div class="field">
+                            <label>Last Name</label>
+                            <input type="text" id="lastName" placeholder="Last Name">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Username / Nickname <span class="optional">(optional)</span></label>
+                        <input type="text" id="username" placeholder="e.g. rahul_designs">
+                    </div>
+
+                    <div class="field">
+                        <label>About Me <span class="optional">(optional)</span></label>
+                        <textarea id="bio" rows="3" placeholder="Tell people about yourself — what you do, your skills, your experience..."></textarea>
+                    </div>
+
+                    <div class="section-divider">Personal Details</div>
+
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Date of Birth <span class="optional">(optional)</span></label>
+                            <input type="date" id="dob">
+                        </div>
+                        <div class="field">
+                            <label>Gender</label>
+                            <select id="gender">
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer_not">Prefer not to say</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Relationship Status <span class="optional">(optional)</span></label>
+                        <div class="rel-options" id="relOptions">
+                            <button class="rel-btn" onclick="setRel(this, 'Single')">Single</button>
+                            <button class="rel-btn" onclick="setRel(this, 'In a relationship')">In a relationship</button>
+                            <button class="rel-btn" onclick="setRel(this, 'Married')">Married</button>
+                            <button class="rel-btn" onclick="setRel(this, 'Divorced')">Divorced</button>
+                            <button class="rel-btn" onclick="setRel(this, 'Widowed')">Widowed</button>
+                            <button class="rel-btn" onclick="setRel(this, 'It is complicated')">It's complicated</button>
+                            <button class="rel-btn" onclick="setRel(this, 'Prefer not to say')">Prefer not to say</button>
+                        </div>
+                        <input type="hidden" id="relationship">
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- CONTACT INFO -->
+            <div class="box">
+                <div class="box-header">
+                    Contact Information
+                    <button class="btn-save" onclick="saveContactInfo()">Save Changes</button>
+                </div>
+                <div class="box-body">
+                    <div class="field">
+                        <label>Email Address</label>
+                        <input type="email" id="email" placeholder="Your email" readonly style="background:#f5f5f5;">
+                    </div>
+                    <div class="field">
+                        <label>Phone Number</label>
+                        <input type="text" id="phone" placeholder="10-digit mobile number" readonly style="background:#f5f5f5;">
+                    </div>
+                    <div class="field">
+                        <label>Website / Portfolio <span class="optional">(optional)</span></label>
+                        <input type="url" id="website" placeholder="https://yourwebsite.com">
+                    </div>
+                    <p style="font-size:10px; color:#888;">Email and phone are verified — cannot be changed here.</p>
+                </div>
+            </div>
+
+            <!-- LOCATION -->
+            <div class="box">
+                <div class="box-header">
+                    Location <span style="font-size:10px; font-weight:normal; opacity:0.8;">(All Optional)</span>
+                    <button class="btn-save" onclick="saveLocation()">Save Changes</button>
+                </div>
+                <div class="box-body">
+                    <div class="form-row">
+                        <div class="field">
+                            <label>City <span class="optional">(optional)</span></label>
+                            <input type="text" id="city" placeholder="e.g. Mumbai">
+                        </div>
+                        <div class="field">
+                            <label>State <span class="optional">(optional)</span></label>
+                            <input type="text" id="state" placeholder="e.g. Maharashtra">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label>Country <span class="optional">(optional)</span></label>
+                            <select id="country">
+                                <option value="">Select Country</option>
+                                <option value="India">India</option>
+                                <option value="USA">USA</option>
+                                <option value="UK">UK</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="UAE">UAE</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>PIN Code <span class="optional">(optional)</span></label>
+                            <input type="text" id="pincode" placeholder="e.g. 400001">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Full Address <span class="optional">(optional — not shown publicly)</span></label>
+                        <textarea id="address" rows="2" placeholder="Your address — this is private and not shown on your public profile"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WORK & EDUCATION -->
+            <div class="box">
+                <div class="box-header">
+                    Work & Education <span style="font-size:10px; font-weight:normal; opacity:0.8;">(All Optional)</span>
+                    <button class="btn-save" onclick="saveWork()">Save Changes</button>
+                </div>
+                <div class="box-body">
+                    <div class="section-divider">Work</div>
+                    <div class="field">
+                        <label>Job Title / Profession <span class="optional">(optional)</span></label>
+                        <input type="text" id="jobTitle" placeholder="e.g. Freelance Logo Designer">
+                    </div>
+                    <div class="field">
+                        <label>Company / Business Name <span class="optional">(optional)</span></label>
+                        <input type="text" id="company" placeholder="e.g. Self Employed">
+                    </div>
+                    <div class="field">
+                        <label>Skills <span class="optional">(optional — shown on profile)</span></label>
+                        <input type="text" id="skills" placeholder="e.g. Logo Design, Web Development, Photography">
+                    </div>
+
+                    <div class="section-divider">Education</div>
+                    <div class="field">
+                        <label>School / College <span class="optional">(optional)</span></label>
+                        <input type="text" id="school" placeholder="e.g. Delhi University">
+                    </div>
+                    <div class="field">
+                        <label>Degree / Course <span class="optional">(optional)</span></label>
+                        <input type="text" id="degree" placeholder="e.g. B.Com, 12th Pass">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SOCIAL LINKS -->
+            <div class="box">
+                <div class="box-header">
+                    Social Media Links <span style="font-size:10px; font-weight:normal; opacity:0.8;">(All Optional)</span>
+                    <button class="btn-save" onclick="saveSocial()">Save Changes</button>
+                </div>
+                <div class="box-body">
+                    <div class="field">
+                        <label>Instagram <span class="optional">(optional)</span></label>
+                        <input type="text" id="instagram" placeholder="@yourusername">
+                    </div>
+                    <div class="field">
+                        <label>LinkedIn <span class="optional">(optional)</span></label>
+                        <input type="url" id="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+                    </div>
+                    <div class="field">
+                        <label>YouTube <span class="optional">(optional)</span></label>
+                        <input type="url" id="youtube" placeholder="https://youtube.com/@yourchannel">
+                    </div>
+                    <div class="field">
+                        <label>Twitter / X <span class="optional">(optional)</span></label>
+                        <input type="text" id="twitter" placeholder="@yourusername">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- END LOGGED IN CONTENT -->
+
+    </div>
+</div>
+
+<footer>
+    <a href="index.html">Home</a>
+    <a href="profile.html">Search ID</a>
+    <a href="marketplace.html">Marketplace</a>
+    <a href="review.html">Leave Review</a>
+    <a href="faq.html">FAQ</a>
+    <br><br>
+    © 2026 TrueLink · Trust. Verified.
+</footer>
+
+<script>
+    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
+    const { createClient } = supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    let currentUser = null
+    let selectedRel = ''
+
+    function getTrustScore(reviews) {
+        if (reviews === 0) return { label: 'New Member', stars: '☆☆☆☆☆' }
+        if (reviews <= 5) return { label: 'Building Trust', stars: '⭐☆☆☆☆' }
+        if (reviews <= 15) return { label: 'Trusted Member', stars: '⭐⭐☆☆☆' }
+        if (reviews <= 30) return { label: 'Highly Trusted', stars: '⭐⭐⭐☆☆' }
+        return { label: 'Top Trusted', stars: '⭐⭐⭐⭐⭐' }
+    }
+
+    window.onload = async function() {
+        const { data: { user } } = await db.auth.getUser()
+        if (!user) {
+            document.getElementById('notLoggedIn').style.display = 'block'
+            document.getElementById('sidebarName').textContent = 'Not logged in'
+            document.getElementById('navUser').textContent = 'Not logged in'
+            return
+        }
+
+        currentUser = user
+        const meta = user.user_metadata
+        const firstName = meta.first_name || ''
+        const lastName = meta.last_name || ''
+        const tlID = meta.truelink_id || '—'
+        const since = new Date(user.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+
+        // Show logged in content
+        document.getElementById('loggedInContent').style.display = 'block'
+
+        // Nav
+        document.getElementById('navUser').textContent = '👤 ' + firstName + ' ' + lastName
+
+        // Sidebar
+        document.getElementById('sidebarName').textContent = firstName + ' ' + lastName
+        document.getElementById('sidebarID').textContent = tlID
+        document.getElementById('sidebarSince').textContent = 'Member since ' + since
+
+        const score = getTrustScore(0)
+        document.getElementById('sidebarStars').textContent = score.stars
+        document.getElementById('sidebarScore').textContent = score.label
+
+        // TrueLink ID
+        document.getElementById('myTLID').textContent = tlID
+
+        // Fill basic info
+        document.getElementById('firstName').value = firstName
+        document.getElementById('lastName').value = lastName
+        document.getElementById('email').value = user.email
+        document.getElementById('phone').value = meta.phone || ''
+        document.getElementById('gender').value = meta.gender || ''
+
+        // Load saved profile from Supabase
+        const { data } = await db.from('Truelink').select('*').eq('email', user.email).single()
+        if (data) {
+            document.getElementById('username').value = data.username || ''
+            document.getElementById('bio').value = data.bio || ''
+            document.getElementById('dob').value = data.dob || ''
+            document.getElementById('website').value = data.website || ''
+            document.getElementById('city').value = data.city || ''
+            document.getElementById('state').value = data.state || ''
+            document.getElementById('country').value = data.country || ''
+            document.getElementById('pincode').value = data.pincode || ''
+            document.getElementById('address').value = data.address || ''
+            document.getElementById('jobTitle').value = data.job_title || ''
+            document.getElementById('company').value = data.company || ''
+            document.getElementById('skills').value = data.skills || ''
+            document.getElementById('school').value = data.school || ''
+            document.getElementById('degree').value = data.degree || ''
+            document.getElementById('instagram').value = data.instagram || ''
+            document.getElementById('linkedin').value = data.linkedin || ''
+            document.getElementById('youtube').value = data.youtube || ''
+            document.getElementById('twitter').value = data.twitter || ''
+
+            if (data.relationship) {
+                selectedRel = data.relationship
+                document.querySelectorAll('.rel-btn').forEach(btn => {
+                    if (btn.textContent === data.relationship) btn.classList.add('selected')
+                })
+            }
+        }
+    }
+
+    function setRel(btn, value) {
+        document.querySelectorAll('.rel-btn').forEach(b => b.classList.remove('selected'))
+        btn.classList.add('selected')
+        selectedRel = value
+    }
+
+    function showMsg(text, type) {
+        const el = document.getElementById('msg')
+        el.textContent = text
+        el.className = 'msg ' + type
+        setTimeout(() => { el.className = 'msg'; el.textContent = '' }, 3000)
+    }
+
+    function copyID() {
+        const id = document.getElementById('myTLID').textContent
+        navigator.clipboard.writeText(id)
+        showMsg('TrueLink ID copied: ' + id, 'success')
+    }
+
+    function previewPic(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader()
+            reader.onload = function(e) {
+                document.getElementById('picDisplay').innerHTML = `<img src="${e.target.result}" alt="Profile">`
+            }
+            reader.readAsDataURL(input.files[0])
+        }
+    }
+
+    async function saveBasicInfo() {
+        const data = {
+            email: currentUser.email,
+            first_name: document.getElementById('firstName').value.trim(),
+            last_name: document.getElementById('lastName').value.trim(),
+            username: document.getElementById('username').value.trim(),
+            bio: document.getElementById('bio').value.trim(),
+            dob: document.getElementById('dob').value,
+            gender: document.getElementById('gender').value,
+            relationship: selectedRel
+        }
+        await saveToSupabase(data)
+    }
+
+    async function saveContactInfo() {
+        const data = {
+            email: currentUser.email,
+            website: document.getElementById('website').value.trim()
+        }
+        await saveToSupabase(data)
+    }
+
+    async function saveLocation() {
+        const data = {
+            email: currentUser.email,
+            city: document.getElementById('city').value.trim(),
+            state: document.getElementById('state').value.trim(),
+            country: document.getElementById('country').value,
+            pincode: document.getElementById('pincode').value.trim(),
+            address: document.getElementById('address').value.trim()
+        }
+        await saveToSupabase(data)
+    }
+
+    async function saveWork() {
+        const data = {
+            email: currentUser.email,
+            job_title: document.getElementById('jobTitle').value.trim(),
+            company: document.getElementById('company').value.trim(),
+            skills: document.getElementById('skills').value.trim(),
+            school: document.getElementById('school').value.trim(),
+            degree: document.getElementById('degree').value.trim()
+        }
+        await saveToSupabase(data)
+    }
+
+    async function saveSocial() {
+        const data = {
+            email: currentUser.email,
+            instagram: document.getElementById('instagram').value.trim(),
+            linkedin: document.getElementById('linkedin').value.trim(),
+            youtube: document.getElementById('youtube').value.trim(),
+            twitter: document.getElementById('twitter').value.trim()
+        }
+        await saveToSupabase(data)
+    }
+
+    async function saveToSupabase(data) {
+        const { error } = await db.from('Truelink').upsert(data, { onConflict: 'email' })
+        if (error) {
+            showMsg('Error saving: ' + error.message, 'error')
+        } else {
+            showMsg('Saved successfully! ✓', 'success')
+        }
+    }
+
+    async function logoutUser() {
+        await db.auth.signOut()
+        window.location.href = 'index.html'
+    }
+</script>
+
+</body>
+</html>
