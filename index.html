@@ -3,299 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrueLink — Login</title>
+    <title>TrueLink — Trust. Verified.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * { font-family: 'Inter', sans-serif; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background-image: url('truelinkbg2_jpg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: relative;
-            overflow: hidden;
         }
-
-        /* BACKGROUND */
-        .bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: url('Truelinkbg.png') center center / cover no-repeat;
-            z-index: 0;
+        .italic-heading { font-family: 'Playfair Display', serif; font-style: italic; }
+        .glass {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15);
         }
-        .bg-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.35);
-            z-index: 1;
+        .glass-dark {
+            background: rgba(0,0,0,0.25);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
-
-        /* CARD */
-        .card {
-            position: relative;
-            z-index: 2;
-            width: 380px;
-            text-align: center;
-            padding: 40px 32px 32px;
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.25);
-            border-radius: 20px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        .btn-glow {
+            background: rgba(59, 130, 246, 0.9);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s;
         }
-
-        /* LOGO */
-        .logo-area { margin-bottom: 24px; }
-        .logo-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 12px;
+        .btn-glow:hover {
+            background: rgba(59, 130, 246, 1);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
         }
-        .logo-icon svg { width: 100%; height: 100%; }
-        .logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            color: white;
-            letter-spacing: 4px;
-            text-transform: uppercase;
+        input:focus { outline: none; }
+        .overlay {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,20,60,0.3) 100%);
+            min-height: 100vh;
         }
-
-        /* BUTTONS */
-        .btn {
-            width: 100%;
-            padding: 14px 20px;
-            border-radius: 50px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            border: none;
-            transition: opacity 0.2s, transform 0.1s;
-        }
-        .btn:hover { opacity: 0.92; transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
-
-        .btn-google {
-            background: white;
-            color: #333;
-        }
-        .btn-email {
-            background: #111;
-            color: white;
-        }
-
-        /* EMAIL FORM */
-        .email-form { display: none; margin-top: 4px; }
-        .email-form.show { display: block; }
-
-        .input-field {
-            width: 100%;
-            padding: 13px 16px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.15);
-            color: white;
-            font-size: 14px;
-            margin-bottom: 10px;
-            outline: none;
-            backdrop-filter: blur(10px);
-        }
-        .input-field::placeholder { color: rgba(255,255,255,0.6); }
-        .input-field:focus { border-color: rgba(255,255,255,0.6); }
-
-        .btn-submit {
-            width: 100%;
-            padding: 13px;
-            border-radius: 50px;
-            background: white;
-            color: #111;
-            font-size: 15px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            margin-bottom: 10px;
-        }
-        .btn-submit:hover { opacity: 0.9; }
-
-        .toggle-link {
-            color: rgba(255,255,255,0.8);
-            font-size: 13px;
-            cursor: pointer;
-            text-decoration: underline;
-            background: none;
-            border: none;
-            margin-bottom: 8px;
-            display: block;
-            width: 100%;
-            text-align: center;
-        }
-        .toggle-link:hover { color: white; }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 4px 0 14px;
-            color: rgba(255,255,255,0.5);
-            font-size: 12px;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* MSG */
-        .msg {
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            margin-bottom: 10px;
-            display: none;
-        }
-        .msg.error { background: rgba(220,50,50,0.3); color: #ffaaaa; border: 1px solid rgba(220,50,50,0.4); display: block; }
-        .msg.success { background: rgba(50,200,100,0.3); color: #aaffcc; border: 1px solid rgba(50,200,100,0.4); display: block; }
-
-        /* MODE LABEL */
-        .mode-label {
-            color: rgba(255,255,255,0.7);
-            font-size: 13px;
-            margin-bottom: 14px;
-        }
-        .mode-label strong { color: white; font-size: 16px; display: block; margin-bottom: 2px; }
-
-        /* FOOTER */
-        .footer-links {
-            position: fixed;
-            bottom: 20px;
-            left: 0; right: 0;
-            text-align: center;
-            z-index: 2;
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-        }
-        .footer-links a {
-            color: rgba(255,255,255,0.6);
-            text-decoration: none;
-            margin: 0 10px;
-        }
-        .footer-links a:hover { color: white; }
-
-        /* BACK TO HOME */
-        .back-home {
-            position: fixed;
-            top: 20px;
-            left: 24px;
-            z-index: 2;
-            color: white;
-            text-decoration: none;
-            font-size: 13px;
-            background: rgba(255,255,255,0.15);
-            padding: 6px 14px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .back-home:hover { background: rgba(255,255,255,0.25); }
-
-        /* GOOGLE ICON */
-        .google-icon { width: 18px; height: 18px; flex-shrink: 0; }
-        .email-icon { font-size: 16px; }
     </style>
 </head>
 <body>
+<div class="overlay">
 
-<div class="bg"></div>
-<div class="bg-overlay"></div>
-
-<a href="index.html" class="back-home">← Home</a>
-
-<div class="card">
-
-    <!-- LOGO -->
-    <div class="logo-area">
-        <div class="logo-icon">
-            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-                <path d="M51 52 L68 65" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- NAV -->
+    <nav class="flex justify-between items-center px-10 py-6">
+        <div class="flex items-center gap-2">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M51 52 L68 65" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
+            <span class="text-white font-bold text-lg tracking-widest">TRUELINK</span>
         </div>
-        <div class="logo-text">TrueLink</div>
-    </div>
-
-    <div class="msg" id="msg"></div>
-
-    <!-- DEFAULT BUTTONS -->
-    <div id="defaultView">
-        <div class="mode-label">
-            <strong>Welcome Back</strong>
-            Sign in to your account
+        <div class="flex items-center gap-8">
+            <a href="index.html" class="text-white text-sm font-medium border-b-2 border-blue-400 pb-0.5">Home</a>
+            <a href="marketplace.html" class="text-white/70 text-sm hover:text-white transition-all">Marketplace</a>
+            <a href="faq.html" class="text-white/70 text-sm hover:text-white transition-all">FAQ</a>
+            <a href="dashboard.html" class="text-white/70 text-sm hover:text-white transition-all">Dashboard</a>
         </div>
-
-        <!-- GOOGLE -->
-        <button class="btn btn-google" onclick="loginGoogle()">
-            <svg class="google-icon" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Continue with Google
-        </button>
-
-        <div class="divider">or</div>
-
-        <!-- EMAIL -->
-        <button class="btn btn-email" onclick="showEmailForm('login')">
-            <span class="email-icon">✉️</span>
-            Continue with email
-        </button>
-
-        <div style="margin-top:12px; color:rgba(255,255,255,0.6); font-size:12px;">
-            Don't have an account?
-            <button class="toggle-link" onclick="showEmailForm('signup')" style="display:inline; width:auto; text-decoration:underline; color:white;">Sign up free</button>
+        <div id="navRight">
+            <button onclick="showAuthModal('login')"
+                class="glass text-white text-sm px-5 py-2 rounded-full hover:bg-white/20 transition-all">
+                Log In
+            </button>
         </div>
-    </div>
+    </nav>
 
-    <!-- EMAIL FORM -->
-    <div class="email-form" id="emailForm">
-        <div class="mode-label" id="formLabel">
-            <strong id="formTitle">Sign In</strong>
-            <span id="formSub">Enter your email and password</span>
+    <!-- HERO -->
+    <div class="flex flex-col items-center justify-center text-center px-6 pt-16 pb-10">
+
+        <!-- WAITLIST BADGE -->
+        <div class="glass rounded-full px-4 py-1.5 text-white/80 text-xs mb-8 flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            <span id="waitlistCount">1,247</span> people have joined TrueLink
         </div>
 
-        <div id="nameFields" style="display:none;">
-            <div style="display:flex; gap:8px;">
-                <input type="text" class="input-field" id="firstName" placeholder="First Name" style="margin-bottom:10px;">
-                <input type="text" class="input-field" id="lastName" placeholder="Last Name" style="margin-bottom:10px;">
+        <!-- HEADING -->
+        <h1 class="text-5xl md:text-6xl font-bold text-white leading-tight mb-4 max-w-3xl">
+            Trust in <span class="italic-heading text-blue-300">Everyone</span>
+        </h1>
+        <p class="text-white/70 text-lg max-w-xl mb-10 leading-relaxed">
+            Know exactly who you're dealing with — before you send money, hire someone, or make any deal online.
+        </p>
+
+        <!-- CTA BUTTONS -->
+        <div class="flex gap-4 mb-16">
+            <button onclick="showAuthModal('signup')"
+                class="btn-glow text-white font-semibold px-8 py-3.5 rounded-full text-sm flex items-center gap-2">
+                Get Started →
+            </button>
+            <button onclick="document.getElementById('searchSection').scrollIntoView({behavior:'smooth'})"
+                class="glass text-white font-medium px-8 py-3.5 rounded-full text-sm hover:bg-white/20 transition-all">
+                Search an ID
+            </button>
+        </div>
+
+        <!-- TRUST STATS -->
+        <div class="flex gap-10 text-center mb-20">
+            <div>
+                <div class="text-white font-bold text-2xl">₹0</div>
+                <div class="text-white/50 text-xs mt-1">Platform cut</div>
             </div>
-            <input type="text" class="input-field" id="phone" placeholder="Mobile Number (10 digits)">
+            <div class="w-px bg-white/20"></div>
+            <div>
+                <div class="text-white font-bold text-2xl">100%</div>
+                <div class="text-white/50 text-xs mt-1">Verified reviews</div>
+            </div>
+            <div class="w-px bg-white/20"></div>
+            <div>
+                <div class="text-white font-bold text-2xl">Free</div>
+                <div class="text-white/50 text-xs mt-1">Forever</div>
+            </div>
         </div>
 
-        <input type="email" class="input-field" id="emailInput" placeholder="Email address">
-        <input type="password" class="input-field" id="passwordInput" placeholder="Password">
+        <!-- SEARCH SECTION -->
+        <div id="searchSection" class="glass rounded-2xl p-6 max-w-md w-full mb-10">
+            <p class="text-white/60 text-xs mb-3 uppercase tracking-widest">Search any TrueLink ID</p>
+            <div class="flex gap-3">
+                <input type="text" id="searchInput" placeholder="TL-XXXX-XX"
+                    class="flex-1 bg-white/10 border border-white/20 text-white placeholder-white/30 rounded-xl px-4 py-3 text-sm focus:border-blue-400 transition-all">
+                <button onclick="searchID()"
+                    class="btn-glow text-white font-semibold px-6 py-3 rounded-xl text-sm">
+                    Search
+                </button>
+            </div>
+        </div>
 
-        <button class="btn-submit" id="submitBtn" onclick="handleSubmit()">Sign In</button>
-        <button class="toggle-link" id="toggleBtn" onclick="toggleMode()">Don't have an account? Sign up</button>
-        <button class="toggle-link" onclick="showDefault()" style="opacity:0.6;">← Back</button>
+        <!-- USE CASE TAGS -->
+        <div class="flex flex-wrap justify-center gap-2 max-w-lg">
+            <span class="glass text-white/70 text-xs px-3 py-1.5 rounded-full">💻 Freelancers</span>
+            <span class="glass text-white/70 text-xs px-3 py-1.5 rounded-full">📦 OLX Sellers</span>
+            <span class="glass text-white/70 text-xs px-3 py-1.5 rounded-full">🏠 Landlords</span>
+            <span class="glass text-white/70 text-xs px-3 py-1.5 rounded-full">❤️ Dating</span>
+            <span class="glass text-white/70 text-xs px-3 py-1.5 rounded-full">🤝 Business Deals</span>
+            <span class="glass text-white/70 text-xs px-3 py-1.5 rounded-full">🎓 Students</span>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="text-center pb-8 text-white/30 text-xs">
+        <div class="flex justify-center gap-6 mb-3">
+            <a href="marketplace.html" class="hover:text-white/60">Marketplace</a>
+            <a href="review.html" class="hover:text-white/60">Leave Review</a>
+            <a href="faq.html" class="hover:text-white/60">FAQ</a>
+            <a href="#" class="hover:text-white/60">Privacy</a>
+            <a href="#" class="hover:text-white/60">Terms</a>
+        </div>
+        © 2026 TrueLink · Trust. Verified.
     </div>
 
 </div>
 
-<div class="footer-links">
-    <a href="#">Privacy policy</a> | <a href="#">Terms of service</a>
+<!-- AUTH MODAL -->
+<div id="authModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+    style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+
+    <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative">
+
+        <!-- CLOSE -->
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">✕</button>
+
+        <!-- TABS -->
+        <div class="flex bg-gray-100 rounded-2xl p-1 mb-6">
+            <button onclick="showAuthModal('login')" id="tab-login"
+                class="flex-1 py-2 text-sm font-semibold rounded-xl bg-white shadow-sm text-gray-900 transition-all">
+                Log In
+            </button>
+            <button onclick="showAuthModal('signup')" id="tab-signup"
+                class="flex-1 py-2 text-sm font-medium text-gray-500 transition-all">
+                Sign Up
+            </button>
+        </div>
+
+        <div id="modalMsg" class="hidden text-xs px-3 py-2 rounded-lg mb-4 text-center"></div>
+
+        <!-- LOGIN -->
+        <div id="modalLogin">
+            <div class="text-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Welcome back</h2>
+                <p class="text-gray-500 text-sm mt-1">Log in to your TrueLink account</p>
+            </div>
+            <div class="space-y-3">
+                <input type="email" id="loginEmail" placeholder="Email address"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                <input type="password" id="loginPass" placeholder="Password"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+            </div>
+            <button onclick="loginUser()"
+                class="w-full mt-4 py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
+                Log In →
+            </button>
+            <p class="text-center text-xs text-gray-500 mt-4">
+                Don't have an ID? <button onclick="showAuthModal('signup')" class="text-blue-600 font-semibold">Sign up free →</button>
+            </p>
+        </div>
+
+        <!-- SIGNUP -->
+        <div id="modalSignup" class="hidden">
+            <!-- STEP 1 -->
+            <div id="mSec1">
+                <div class="text-center mb-5">
+                    <h2 class="text-xl font-bold text-gray-900">Create Your Trust ID</h2>
+                    <p class="text-gray-500 text-sm mt-1">Free forever. Takes 2 minutes.</p>
+                </div>
+
+                <!-- STEP DOTS -->
+                <div class="flex items-center mb-5">
+                    <div class="flex flex-col items-center">
+                        <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold" id="ms1">1</div>
+                        <span class="text-xs text-blue-600 mt-1">Info</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gray-200 mx-2" id="mline1"></div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-7 h-7 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold" id="ms2">2</div>
+                        <span class="text-xs text-gray-400 mt-1">Phone</span>
+                    </div>
+                    <div class="flex-1 h-0.5 bg-gray-200 mx-2" id="mline2"></div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-7 h-7 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xs font-bold" id="ms3">3</div>
+                        <span class="text-xs text-gray-400 mt-1">Done!</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex gap-2">
+                        <input type="text" id="mFirst" placeholder="First name"
+                            class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                        <input type="text" id="mLast" placeholder="Last name"
+                            class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                    </div>
+                    <input type="email" id="mEmail" placeholder="Email address"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                    <input type="password" id="mPass" placeholder="Password (min 8 characters)"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                </div>
+                <div class="flex items-start gap-2 mt-3 mb-4">
+                    <input type="checkbox" id="mTerms" class="mt-1">
+                    <label for="mTerms" class="text-xs text-gray-500">
+                        I agree to <a href="#" class="text-blue-600">Terms</a> & <a href="#" class="text-blue-600">Privacy Policy</a>
+                    </label>
+                </div>
+                <button onclick="mGoStep2()"
+                    class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
+                    Continue →
+                </button>
+            </div>
+
+            <!-- STEP 2 -->
+            <div id="mSec2" class="hidden">
+                <div class="text-center mb-5">
+                    <h2 class="text-xl font-bold text-gray-900">Verify Your Phone</h2>
+                    <p class="text-gray-500 text-sm mt-1" id="mPhoneShow"></p>
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="mPhone" placeholder="10-digit mobile number"
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                    <div class="flex gap-2">
+                        <input type="text" id="mOTP" placeholder="6-digit OTP" maxlength="6"
+                            class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
+                        <button onclick="mSendOTP()" id="mOTPBtn"
+                            class="px-4 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 whitespace-nowrap">
+                            Send OTP
+                        </button>
+                    </div>
+                    <p id="mOTPHint" class="text-xs text-blue-600 hidden">✓ OTP sent! Demo: <strong>123456</strong></p>
+                </div>
+                <button onclick="mGoStep3()"
+                    class="w-full mt-4 py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
+                    Verify & Get My ID →
+                </button>
+                <button onclick="mGoBack()" class="w-full mt-2 py-2 text-sm text-gray-500 hover:text-gray-700">← Back</button>
+            </div>
+
+            <!-- STEP 3 -->
+            <div id="mSec3" class="hidden text-center py-2">
+                <div class="text-4xl mb-3">🎉</div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">Your TrueLink ID is Ready!</h3>
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-xl px-6 py-4 my-4">
+                    <div class="text-xl font-bold text-blue-600 tracking-widest font-mono" id="mGeneratedID">—</div>
+                    <p class="text-xs text-gray-500 mt-1">Your unique Trust ID</p>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Share on Instagram, OLX, WhatsApp — anywhere!</p>
+                <button onclick="window.location.href='dashboard.html'"
+                    class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
+                    View My Dashboard →
+                </button>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script>
@@ -304,128 +302,172 @@
     const { createClient } = supabase
     const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-    let currentMode = 'login'
+    let mOtpSent = false
+    let mUserData = {}
 
-    // Check if already logged in
+    // Check login
     window.onload = async function() {
         const { data: { user } } = await db.auth.getUser()
         if (user) {
-            window.location.href = 'dashboard.html'
+            const meta = user.user_metadata
+            const name = (meta.first_name || '') + ' ' + (meta.last_name || '')
+            document.getElementById('navRight').innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="text-white/70 text-sm">👤 ${name.trim()}</span>
+                    <a href="dashboard.html" class="glass text-white text-sm px-5 py-2 rounded-full hover:bg-white/20 transition-all">Dashboard</a>
+                    <button onclick="logoutUser()" class="text-white/50 text-sm hover:text-white">Log Out</button>
+                </div>
+            `
         }
+
+        // Animate waitlist count
+        animateCount()
+    }
+
+    function animateCount() {
+        let count = 1200
+        const target = 1247
+        const el = document.getElementById('waitlistCount')
+        const interval = setInterval(() => {
+            count += 3
+            if (count >= target) { count = target; clearInterval(interval) }
+            el.textContent = count.toLocaleString()
+        }, 30)
+    }
+
+    async function logoutUser() {
+        await db.auth.signOut()
+        window.location.reload()
+    }
+
+    function showAuthModal(tab) {
+        document.getElementById('authModal').classList.remove('hidden')
+        document.body.style.overflow = 'hidden'
+
+        if (tab === 'login') {
+            document.getElementById('modalLogin').classList.remove('hidden')
+            document.getElementById('modalSignup').classList.add('hidden')
+            document.getElementById('tab-login').className = 'flex-1 py-2 text-sm font-semibold rounded-xl bg-white shadow-sm text-gray-900 transition-all'
+            document.getElementById('tab-signup').className = 'flex-1 py-2 text-sm font-medium text-gray-500 transition-all'
+        } else {
+            document.getElementById('modalLogin').classList.add('hidden')
+            document.getElementById('modalSignup').classList.remove('hidden')
+            document.getElementById('tab-login').className = 'flex-1 py-2 text-sm font-medium text-gray-500 transition-all'
+            document.getElementById('tab-signup').className = 'flex-1 py-2 text-sm font-semibold rounded-xl bg-white shadow-sm text-gray-900 transition-all'
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('authModal').classList.add('hidden')
+        document.body.style.overflow = ''
     }
 
     function showMsg(text, type) {
-        const el = document.getElementById('msg')
+        const el = document.getElementById('modalMsg')
         el.textContent = text
-        el.className = 'msg ' + type
-        setTimeout(() => { el.className = 'msg'; el.textContent = '' }, 4000)
+        el.className = type === 'error'
+            ? 'text-xs px-3 py-2 rounded-lg mb-4 text-center bg-red-50 text-red-600 border border-red-100'
+            : 'text-xs px-3 py-2 rounded-lg mb-4 text-center bg-green-50 text-green-600 border border-green-100'
+        el.classList.remove('hidden')
+        setTimeout(() => el.classList.add('hidden'), 4000)
     }
 
-    async function loginGoogle() {
-        const { error } = await db.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: 'https://truelink.qzz.io/dashboard.html'
-            }
-        })
-        if (error) showMsg('Google login failed: ' + error.message, 'error')
+    async function loginUser() {
+        const email = document.getElementById('loginEmail').value.trim()
+        const pass = document.getElementById('loginPass').value
+        if (!email || !pass) { showMsg('Please enter email and password.', 'error'); return }
+
+        const { error } = await db.auth.signInWithPassword({ email, password: pass })
+        if (error) { showMsg('Login failed: ' + error.message, 'error'); return }
+
+        showMsg('Login successful! Redirecting...', 'success')
+        setTimeout(() => window.location.href = 'dashboard.html', 1000)
     }
 
-    function showEmailForm(mode) {
-        document.getElementById('defaultView').style.display = 'none'
-        document.getElementById('emailForm').classList.add('show')
-        currentMode = mode
-        updateFormMode()
+    function mGoStep2() {
+        const first = document.getElementById('mFirst').value.trim()
+        const last = document.getElementById('mLast').value.trim()
+        const email = document.getElementById('mEmail').value.trim()
+        const pass = document.getElementById('mPass').value
+        const terms = document.getElementById('mTerms').checked
+
+        if (!first || !last) { showMsg('Please enter your full name.', 'error'); return }
+        if (!email || !email.includes('@')) { showMsg('Please enter a valid email.', 'error'); return }
+        if (pass.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); return }
+        if (!terms) { showMsg('Please agree to Terms and Privacy Policy.', 'error'); return }
+
+        mUserData = { first, last, email, pass }
+        document.getElementById('mPhoneShow').textContent = 'Enter your mobile number to verify'
+
+        document.getElementById('mSec1').classList.add('hidden')
+        document.getElementById('mSec2').classList.remove('hidden')
+        document.getElementById('ms1').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
+        document.getElementById('ms1').textContent = '✓'
+        document.getElementById('mline1').className = 'flex-1 h-0.5 bg-blue-600 mx-2'
+        document.getElementById('ms2').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
+        document.getElementById('ms2').textContent = '2'
     }
 
-    function showDefault() {
-        document.getElementById('defaultView').style.display = 'block'
-        document.getElementById('emailForm').classList.remove('show')
-        document.getElementById('msg').className = 'msg'
+    function mGoBack() {
+        document.getElementById('mSec2').classList.add('hidden')
+        document.getElementById('mSec1').classList.remove('hidden')
     }
 
-    function updateFormMode() {
-        if (currentMode === 'login') {
-            document.getElementById('formTitle').textContent = 'Sign In'
-            document.getElementById('formSub').textContent = 'Enter your email and password'
-            document.getElementById('submitBtn').textContent = 'Sign In'
-            document.getElementById('toggleBtn').textContent = "Don't have an account? Sign up"
-            document.getElementById('nameFields').style.display = 'none'
-        } else {
-            document.getElementById('formTitle').textContent = 'Create Account'
-            document.getElementById('formSub').textContent = 'Fill in your details to get started'
-            document.getElementById('submitBtn').textContent = 'Create My TrueLink ID →'
-            document.getElementById('toggleBtn').textContent = 'Already have an account? Sign in'
-            document.getElementById('nameFields').style.display = 'block'
-        }
-    }
+    function mSendOTP() {
+        const phone = document.getElementById('mPhone').value.trim()
+        if (phone.length !== 10 || isNaN(phone)) { showMsg('Enter a valid 10-digit phone number.', 'error'); return }
 
-    function toggleMode() {
-        currentMode = currentMode === 'login' ? 'signup' : 'login'
-        updateFormMode()
-    }
-
-    async function handleSubmit() {
-        const email = document.getElementById('emailInput').value.trim()
-        const pass = document.getElementById('passwordInput').value
-
-        if (!email || !pass) { showMsg('Please fill in all fields.', 'error'); return; }
-
-        const btn = document.getElementById('submitBtn')
-        btn.textContent = 'Please wait...'
+        mUserData.phone = phone
+        mOtpSent = true
+        document.getElementById('mOTPHint').classList.remove('hidden')
+        const btn = document.getElementById('mOTPBtn')
         btn.disabled = true
-
-        if (currentMode === 'login') {
-            const { error } = await db.auth.signInWithPassword({ email, password: pass })
-            if (error) {
-                showMsg('Login failed: ' + error.message, 'error')
-                btn.textContent = 'Sign In'
-                btn.disabled = false
-            } else {
-                showMsg('Login successful! ✓', 'success')
-                setTimeout(() => window.location.href = 'dashboard.html', 1000)
-            }
-        } else {
-            const first = document.getElementById('firstName').value.trim()
-            const last = document.getElementById('lastName').value.trim()
-            const phone = document.getElementById('phone').value.trim()
-
-            if (!first || !last) { showMsg('Please enter your name.', 'error'); btn.textContent = 'Create My TrueLink ID →'; btn.disabled = false; return; }
-            if (pass.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); btn.textContent = 'Create My TrueLink ID →'; btn.disabled = false; return; }
-
-            // Generate TrueLink ID
-            const num = Math.floor(1000 + Math.random() * 9000)
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-            const l1 = letters[Math.floor(Math.random() * 26)]
-            const l2 = letters[Math.floor(Math.random() * 26)]
-            const tlID = 'TL-' + num + '-' + l1 + l2
-
-            const { data, error } = await db.auth.signUp({
-                email, password: pass,
-                options: {
-                    data: {
-                        first_name: first,
-                        last_name: last,
-                        phone: phone,
-                        truelink_id: tlID
-                    }
-                }
-            })
-
-            if (error) {
-                showMsg('Signup failed: ' + error.message, 'error')
-                btn.textContent = 'Create My TrueLink ID →'
-                btn.disabled = false
-            } else {
-                await db.from('Truelink').insert({
-                    email, first_name: first, last_name: last,
-                    phone, truelink_id: tlID, trust_score: 0, review_count: 0
-                })
-                showMsg('Account created! TrueLink ID: ' + tlID + ' ✓', 'success')
-                setTimeout(() => window.location.href = 'dashboard.html', 2000)
-            }
-        }
+        btn.textContent = 'Sent!'
+        setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend' }, 30000)
     }
+
+    async function mGoStep3() {
+        if (!mOtpSent) { showMsg('Please send OTP first.', 'error'); return }
+        const otp = document.getElementById('mOTP').value.trim()
+        if (otp !== '123456') { showMsg('Incorrect OTP. Demo: 123456', 'error'); return }
+
+        const num = Math.floor(1000 + Math.random() * 9000)
+        const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        const tlID = 'TL-' + num + '-' + L[Math.floor(Math.random()*26)] + L[Math.floor(Math.random()*26)]
+
+        const { error } = await db.auth.signUp({
+            email: mUserData.email, password: mUserData.pass,
+            options: { data: { first_name: mUserData.first, last_name: mUserData.last, phone: mUserData.phone, truelink_id: tlID } }
+        })
+        if (error) { showMsg('Error: ' + error.message, 'error'); return }
+
+        await db.from('Truelink').insert({
+            email: mUserData.email, first_name: mUserData.first,
+            last_name: mUserData.last, phone: mUserData.phone, truelink_id: tlID
+        })
+
+        document.getElementById('mGeneratedID').textContent = tlID
+        document.getElementById('mSec2').classList.add('hidden')
+        document.getElementById('mSec3').classList.remove('hidden')
+        document.getElementById('ms2').textContent = '✓'
+        document.getElementById('mline2').className = 'flex-1 h-0.5 bg-blue-600 mx-2'
+        document.getElementById('ms3').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
+    }
+
+    function searchID() {
+        const id = document.getElementById('searchInput').value.trim().toUpperCase()
+        if (!id) return
+        if (!id.startsWith('TL-')) { alert('Format: TL-XXXX-XX'); return }
+        window.location.href = 'profile.html?id=' + id
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') searchID()
+    })
+
+    document.getElementById('authModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal()
+    })
 </script>
 
 </body>
