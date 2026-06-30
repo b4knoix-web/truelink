@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrueLink — FAQ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
@@ -336,6 +337,22 @@
 </footer>
 
 <script>
+    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
+const SUPABASE_KEY = 'YAHAN_APNI_ANON_KEY_DAALO'
+const { createClient } = supabase
+const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+window.onload = async function() {
+    const { data: { user } } = await db.auth.getUser()
+    if (user) {
+        const homeLink = document.querySelector('.nav-links-bar a[href="index.html"]')
+        if (homeLink) homeLink.style.display = 'none'
+        const sideHome = document.querySelector('.side-box-body a[href="index.html"]')
+        if (sideHome) sideHome.style.display = 'none'
+        const sideCreate = document.querySelector('.side-box-body a[href="signup.html"]')
+        if (sideCreate) sideCreate.style.display = 'none'
+    }
+}
     function toggle(el) {
         const answer = el.nextElementSibling;
         const arrow = el.querySelector('.faq-arrow');
