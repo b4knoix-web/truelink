@@ -604,17 +604,24 @@
         'TL-5521-BM': 'Amit Singh'
     };
 
-    function searchPerson() {
-        const input = document.getElementById('searchInput').value.trim().toUpperCase();
-        if (!input) { showMsg('Please enter a TrueLink ID.', 'error'); return; }
-        if (!input.startsWith('TL-')) { showMsg('Please enter a valid TrueLink ID — format: TL-XXXX-XX', 'error'); return; }
+    async function searchPerson() {
+    const input = document.getElementById('searchInput').value.trim().toUpperCase();
+    if (!input) { showMsg('Please enter a TrueLink ID.', 'error'); return; }
+    if (!input.startsWith('TL-')) { showMsg('Please enter a valid TrueLink ID — format: TL-XXXX-XX', 'error'); return; }
 
-        const name = demoProfiles[input] || 'TrueLink User';
-        document.getElementById('foundName').textContent = name;
-        document.getElementById('foundID').textContent = input;
-        document.getElementById('foundCard').classList.add('show');
-        document.getElementById('reviewForm').classList.add('show');
+    const { data, error } = await db.from('Truelink').select('*').eq('truelink_id', input).single();
+
+    if (error || !data) {
+        showMsg('No profile found for this ID.', 'error');
+        return;
     }
+
+    const name = (data.first_name || '') + ' ' + (data.last_name || '');
+    document.getElementById('foundName').textContent = name.trim() || 'TrueLink User';
+    document.getElementById('foundID').textContent = input;
+    document.getElementById('foundCard').classList.add('show');
+    document.getElementById('reviewForm').classList.add('show');
+}
 
     function setStar(n) {
         selectedStars = n;
