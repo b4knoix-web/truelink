@@ -331,6 +331,8 @@
         const { data: { user } } = await db.auth.getUser()
         if (user) {
             showLoggedInUser(user)
+            const homeLink = document.querySelector('.nav-links-bar a[href="index.html"]')
+            if (homeLink) homeLink.style.display = 'none'
         }
 
         // Check URL for search ID
