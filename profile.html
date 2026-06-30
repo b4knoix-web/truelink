@@ -407,71 +407,52 @@
         }
     }
 
-    function searchProfile() {
-        const input = document.getElementById('searchInput').value.trim().toUpperCase()
-        document.getElementById('emptyState').style.display = 'none'
-        document.getElementById('notFound').style.display = 'none'
-        document.getElementById('profileSection').style.display = 'none'
+    async function searchProfile() {
+    const input = document.getElementById('searchInput').value.trim().toUpperCase()
+    document.getElementById('emptyState').style.display = 'none'
+    document.getElementById('notFound').style.display = 'none'
+    document.getElementById('profileSection').style.display = 'none'
 
-        if (!input) { document.getElementById('emptyState').style.display = 'block'; return; }
-        if (!input.startsWith('TL-')) { document.getElementById('notFound').style.display = 'block'; return; }
+    if (!input) { document.getElementById('emptyState').style.display = 'block'; return }
+    if (!input.startsWith('TL-')) { document.getElementById('notFound').style.display = 'block'; return }
 
-        if (demoProfiles[input]) {
-            showProfile(input, demoProfiles[input])
-        } else {
-            showNewProfile(input)
-        }
+    const { data, error } = await db.from('Truelink').select('*').eq('truelink_id', input).single()
+
+    if (error || !data) {
+        document.getElementById('notFound').style.display = 'block'
+        return
     }
 
-    function showProfile(id, data) {
-        document.getElementById('profileSection').style.display = 'block'
-        document.getElementById('pName').textContent = data.name
-        document.getElementById('pID').textContent = id
-        document.getElementById('pSince').textContent = data.since
-        document.getElementById('sSince').textContent = data.since
-        document.getElementById('pReviews').textContent = data.reviews
-        document.getElementById('sTotalReviews').textContent = data.reviews
-        document.getElementById('sSuccess').textContent = '100%'
-        document.getElementById('verifyStamp').className = 'verified-stamp'
-        document.getElementById('verifyStamp').textContent = '✓ TrueLink Verified'
+    showRealProfile(input, data)
+}
 
-        const score = getTrustScore(data.reviews)
-        document.getElementById('pTrustScore').textContent = score.label
+function showRealProfile(id, data) {
+    document.getElementById('profileSection').style.display = 'block'
 
-        if (data.reviewList && data.reviewList.length > 0) {
-            document.getElementById('noReviews').style.display = 'none'
-            let html = ''
-            data.reviewList.forEach(r => {
-                const stars = '★'.repeat(r.stars) + '☆'.repeat(5 - r.stars)
-                html += `<div class="review">
-                    <div class="review-top">
-                        <div><div class="reviewer-name">${r.name}</div><div class="reviewer-id">${r.id}</div></div>
-                        <div class="stars">${stars}</div>
-                    </div>
-                    <div class="review-text">${r.text}</div>
-                    <span class="verified-tag">✓ Verified Deal</span>
-                    <div class="review-date">${r.date}</div>
-                </div>`
-            })
-            document.getElementById('reviewsList').innerHTML = html
-        }
-    }
+    const fullName = (data.first_name || '') + ' ' + (data.last_name || '')
+    document.getElementById('pName').textContent = fullName.trim() || 'TrueLink User'
+    document.getElementById('pID').textContent = id
 
-    function showNewProfile(id) {
-        document.getElementById('profileSection').style.display = 'block'
-        document.getElementById('pName').textContent = 'TrueLink User'
-        document.getElementById('pID').textContent = id
-        document.getElementById('pSince').textContent = 'June 2026'
-        document.getElementById('sSince').textContent = 'June 2026'
-        document.getElementById('pReviews').textContent = '0'
-        document.getElementById('sTotalReviews').textContent = '0'
-        document.getElementById('sSuccess').textContent = '—'
-        document.getElementById('pTrustScore').textContent = 'New Member'
-        document.getElementById('verifyStamp').className = 'pending-stamp'
-        document.getElementById('verifyStamp').textContent = '⏳ Verification Pending'
-        document.getElementById('noReviews').style.display = 'block'
-        document.getElementById('reviewsList').innerHTML = ''
-    }
+    const since = data.created_at
+        ? new Date(data.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+        : 'June 2026'
+    document.getElementById('pSince').textContent = since
+    document.getElementById('sSince').textContent = since
+
+    const reviewCount = data.review_count || 0
+    document.getElementById('pReviews').textContent = reviewCount
+    document.getElementById('sTotalReviews').textContent = reviewCount
+    document.getElementById('sSuccess').textContent = reviewCount > 0 ? '100%' : '—'
+
+    const score = getTrustScore(reviewCount)
+    document.getElementById('pTrustScore').textContent = score.label
+
+    document.getElementById('verifyStamp').className = 'verified-stamp'
+    document.getElementById('verifyStamp').textContent = '✓ TrueLink Verified'
+
+    document.getElementById('noReviews').style.display = 'block'
+    document.getElementById('reviewsList').innerHTML = ''
+}
 
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') searchProfile()
