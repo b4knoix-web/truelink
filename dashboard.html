@@ -491,6 +491,8 @@
         }
 
         currentUser = user
+        const homeLink = document.querySelector('.nav-links-bar a[href="index.html"]')
+        if (homeLink) homeLink.style.display = 'none'
         const meta = user.user_metadata
         const firstName = meta.first_name || ''
         const lastName = meta.last_name || ''
