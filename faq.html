@@ -95,11 +95,9 @@
 
 <nav>
     <div class="logo">TrueLink</div>
-    <div class="nav-right">
-        <input type="text" placeholder="Email or Phone">
-        <input type="password" placeholder="Password" style="width:110px;">
-        <button class="btn-login">Log In</button>
-    </div>
+    <div class="nav-right" id="navRight">
+    <a href="index.html" style="padding:5px 14px; background:white; color:#1877f2; border-radius:3px; font-size:12px; font-weight:bold; text-decoration:none;">Log In / Sign Up</a>
+</div>
 </nav>
 
 <div class="nav-links-bar">
@@ -335,12 +333,6 @@
     <br><br>
     © 2026 TrueLink · Trust. Verified.
 </footer>
-
-<script>
-    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
-const { createClient } = supabase
-const db = createClient(SUPABASE_URL, SUPABASE_KEY)
     function toggle(el) {
         const answer = el.nextElementSibling;
         const arrow = el.querySelector('.faq-arrow');
