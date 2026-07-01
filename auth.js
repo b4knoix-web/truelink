@@ -63,4 +63,4 @@ async function logoutUser() {
     window.location.href = 'index.html'
 }
 
-document.addEventListener('DOMContentLoaded', initAuth)
+window.addEventListener('load', initAuth)
