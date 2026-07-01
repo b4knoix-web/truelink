@@ -341,18 +341,6 @@
 const SUPABASE_KEY = 'YAHAN_APNI_ANON_KEY_DAALO'
 const { createClient } = supabase
 const db = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-window.onload = async function() {
-    const { data: { user } } = await db.auth.getUser()
-    if (user) {
-        const homeLink = document.querySelector('.nav-links-bar a[href="index.html"]')
-        if (homeLink) homeLink.style.display = 'none'
-        const sideHome = document.querySelector('.side-box-body a[href="index.html"]')
-        if (sideHome) sideHome.style.display = 'none'
-        const sideCreate = document.querySelector('.side-box-body a[href="signup.html"]')
-        if (sideCreate) sideCreate.style.display = 'none'
-    }
-}
     function toggle(el) {
         const answer = el.nextElementSibling;
         const arrow = el.querySelector('.faq-arrow');
