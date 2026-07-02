@@ -642,13 +642,21 @@
     }
 
     async function saveToSupabase(data) {
-        const { error } = await db.from('Truelink').upsert(data, { onConflict: 'email' })
-        if (error) {
-            showMsg('Error saving: ' + error.message, 'error')
-        } else {
-            showMsg('Saved successfully! ✓', 'success')
+    const cleanData = {}
+    Object.keys(data).forEach(key => {
+        if (data[key] !== '' && data[key] !== null && data[key] !== undefined) {
+            cleanData[key] = data[key]
         }
+    })
+    cleanData.email = currentUser.email
+
+    const { error } = await db.from('Truelink').upsert(cleanData, { onConflict: 'email' })
+    if (error) {
+        showMsg('Error saving: ' + error.message, 'error')
+    } else {
+        showMsg('Saved successfully! ✓', 'success')
     }
+}
 
     async function logoutUser() {
         await db.auth.signOut()
