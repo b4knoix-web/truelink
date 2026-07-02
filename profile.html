@@ -48,7 +48,7 @@
         .profile-since { font-size: 11px; color: #888; }
 
         .trust-score-bar { background: #f0f4ff; border: 1px solid #b0c0e8; padding: 10px 14px; margin-top: 12px; display: flex; align-items: center; gap: 16px; }
-        .score-stars { font-size: 20px; color: #f4a000; }
+        .score-stars { font-size: 22px; font-weight: bold; color: #1877f2; }
         .score-label { font-size: 13px; font-weight: bold; color: #1877f2; }
         .score-sub { font-size: 11px; color: #888; }
         .score-count { font-size: 11px; color: #555; margin-top: 2px; }
@@ -205,11 +205,11 @@
 
                 <div class="trust-score-bar">
                     <div>
-                        <div class="score-stars" id="myStars">☆☆☆☆☆</div>
+                        <div class="score-stars" id="myStars">— / 100</div>
                         <div class="score-count" id="myReviewCount">0 verified reviews</div>
                     </div>
                     <div>
-                        <div class="score-label" id="myScoreLabel">New Member</div>
+                        <div class="score-label" id="myScoreLabel">🔵 Verified</div>
                         <div class="score-sub">Trust Score</div>
                     </div>
                 </div>
@@ -270,7 +270,7 @@
                         <div class="info-row"><span class="info-label">Email Verified:</span><span class="info-value green">✓ Yes</span></div>
                         <div class="info-row"><span class="info-label">Total Reviews:</span><span class="info-value" id="pReviews">0</span></div>
                         <div class="info-row"><span class="info-label">Disputes:</span><span class="info-value green">0 — Clean Record</span></div>
-                        <div class="info-row"><span class="info-label">Trust Score:</span><span class="info-value" id="pTrustScore">New Member</span></div>
+                        <div class="info-row"><span class="info-label">Trust Score:</span><span class="info-value" id="pTrustScore">—</span></div>
                     </div>
                 </div>
             </div>
@@ -340,11 +340,14 @@
     }
 
     function getTrustScore(reviews) {
-        if (reviews === 0) return { label: 'New Member', stars: '☆☆☆☆☆' }
-        if (reviews <= 5) return { label: 'Building Trust', stars: '⭐☆☆☆☆' }
-        if (reviews <= 15) return { label: 'Trusted Member', stars: '⭐⭐☆☆☆' }
-        if (reviews <= 30) return { label: 'Highly Trusted', stars: '⭐⭐⭐☆☆' }
-        return { label: 'Top Trusted', stars: '⭐⭐⭐⭐⭐' }
+        const score = Math.min(100, 50 + (reviews * 3))
+        let label, badge
+        if (reviews === 0) { label = 'New Member'; badge = '🔵 Verified' }
+        else if (reviews <= 5) { label = 'Building Trust'; badge = '🟡 Under Review' }
+        else if (reviews <= 15) { label = 'Trusted Member'; badge = '🟢 Trusted' }
+        else if (reviews <= 30) { label = 'Highly Trusted'; badge = '🟢 Trusted' }
+        else { label = 'Top Trusted'; badge = '🟣 Top Contributor' }
+        return { score, label, badge }
     }
 
     async function showLoggedInUser(user) {
@@ -361,8 +364,8 @@
         document.getElementById('myProfileBox').classList.add('show')
 
         const score = getTrustScore(0)
-        document.getElementById('myStars').textContent = score.stars
-        document.getElementById('myScoreLabel').textContent = score.label
+        document.getElementById('myStars').textContent = score.score + ' / 100'
+        document.getElementById('myScoreLabel').textContent = score.badge
         document.getElementById('myReviewCount').textContent = '0 verified reviews'
 
         // Update nav
@@ -394,62 +397,52 @@
         alert('TrueLink ID copied: ' + id)
     }
 
-    // SEARCH
-    const demoProfiles = {
-        'TL-4829-XK': { name: 'Rahul Sharma', since: 'June 2026', reviews: 3,
-            reviewList: [
-                { name: 'Priya M.', id: 'TL-2910-AK', stars: 5, text: 'Very professional. Delivered exactly as discussed.', date: 'June 20, 2026' },
-                { name: 'Amit S.', id: 'TL-5521-BM', stars: 5, text: 'Great communication. Work was clean and on time.', date: 'June 15, 2026' }
-            ]
-        }
-    }
-
     async function searchProfile() {
-    const input = document.getElementById('searchInput').value.trim().toUpperCase()
-    document.getElementById('emptyState').style.display = 'none'
-    document.getElementById('notFound').style.display = 'none'
-    document.getElementById('profileSection').style.display = 'none'
+        const input = document.getElementById('searchInput').value.trim().toUpperCase()
+        document.getElementById('emptyState').style.display = 'none'
+        document.getElementById('notFound').style.display = 'none'
+        document.getElementById('profileSection').style.display = 'none'
 
-    if (!input) { document.getElementById('emptyState').style.display = 'block'; return }
-    if (!input.startsWith('TL-')) { document.getElementById('notFound').style.display = 'block'; return }
+        if (!input) { document.getElementById('emptyState').style.display = 'block'; return }
+        if (!input.startsWith('TL-')) { document.getElementById('notFound').style.display = 'block'; return }
 
-    const { data, error } = await db.from('Truelink').select('*').eq('truelink_id', input).single()
+        const { data, error } = await db.from('Truelink').select('*').eq('truelink_id', input).single()
 
-    if (error || !data) {
-        document.getElementById('notFound').style.display = 'block'
-        return
+        if (error || !data) {
+            document.getElementById('notFound').style.display = 'block'
+            return
+        }
+
+        showRealProfile(input, data)
     }
 
-    showRealProfile(input, data)
-}
+    function showRealProfile(id, data) {
+        document.getElementById('profileSection').style.display = 'block'
 
-function showRealProfile(id, data) {
-    document.getElementById('profileSection').style.display = 'block'
+        const fullName = (data.first_name || '') + ' ' + (data.last_name || '')
+        document.getElementById('pName').textContent = fullName.trim() || 'TrueLink User'
+        document.getElementById('pID').textContent = id
 
-    const fullName = (data.first_name || '') + ' ' + (data.last_name || '')
-    document.getElementById('pName').textContent = fullName.trim() || 'TrueLink User'
-    document.getElementById('pID').textContent = id
+        const since = data.created_at
+            ? new Date(data.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+            : 'June 2026'
+        document.getElementById('pSince').textContent = since
+        document.getElementById('sSince').textContent = since
 
-    const since = data.created_at
-        ? new Date(data.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-        : 'June 2026'
-    document.getElementById('pSince').textContent = since
-    document.getElementById('sSince').textContent = since
+        const reviewCount = data.review_count || 0
+        document.getElementById('pReviews').textContent = reviewCount
+        document.getElementById('sTotalReviews').textContent = reviewCount
+        document.getElementById('sSuccess').textContent = reviewCount > 0 ? '100%' : '—'
 
-    const reviewCount = data.review_count || 0
-    document.getElementById('pReviews').textContent = reviewCount
-    document.getElementById('sTotalReviews').textContent = reviewCount
-    document.getElementById('sSuccess').textContent = reviewCount > 0 ? '100%' : '—'
+        const score = getTrustScore(reviewCount)
+        document.getElementById('pTrustScore').innerHTML = `<strong>${score.score}/100</strong> · ${score.badge}`
 
-    const score = getTrustScore(reviewCount)
-    document.getElementById('pTrustScore').textContent = score.label
+        document.getElementById('verifyStamp').className = 'verified-stamp'
+        document.getElementById('verifyStamp').textContent = '✓ TrueLink Verified'
 
-    document.getElementById('verifyStamp').className = 'verified-stamp'
-    document.getElementById('verifyStamp').textContent = '✓ TrueLink Verified'
-
-    document.getElementById('noReviews').style.display = 'block'
-    document.getElementById('reviewsList').innerHTML = ''
-}
+        document.getElementById('noReviews').style.display = 'block'
+        document.getElementById('reviewsList').innerHTML = ''
+    }
 
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') searchProfile()
