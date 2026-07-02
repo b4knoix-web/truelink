@@ -574,15 +574,32 @@
         showMsg('TrueLink ID copied: ' + id, 'success')
     }
 
-    function previewPic(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader()
-            reader.onload = function(e) {
-                document.getElementById('picDisplay').innerHTML = `<img src="${e.target.result}" alt="Profile">`
-            }
-            reader.readAsDataURL(input.files[0])
+    async function previewPic(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0]
+        const reader = new FileReader()
+        reader.onload = function(e) {
+            document.getElementById('picDisplay').innerHTML = `<img src="${e.target.result}" alt="Profile">`
+        }
+        reader.readAsDataURL(file)
+
+        // Upload to Supabase Storage
+        const fileExt = file.name.split('.').pop()
+        const fileName = currentUser.id + '.' + fileExt
+        const { error } = await db.storage.from('avatars').upload(fileName, file, { upsert: true })
+
+        if (!error) {
+            const { data } = db.storage.from('avatars').getPublicUrl(fileName)
+            await db.from('Truelink').upsert({
+                email: currentUser.email,
+                avatar_url: data.publicUrl
+            }, { onConflict: 'email' })
+            showMsg('Profile picture saved! ✓', 'success')
+        } else {
+            showMsg('Error uploading picture: ' + error.message, 'error')
         }
     }
+}
 
     async function saveBasicInfo() {
         const data = {
