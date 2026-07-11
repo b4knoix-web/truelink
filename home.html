@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueLink — Home</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+    :root {
+        --bg: #F3F4F8;
+        --card: #FFFFFF;
+        --ink: #1A1A2E;
+        --ink-soft: #6B7280;
+        --ink-faint: #A0A4B8;
+        --accent: #6C5CE7;
+        --accent-2: #FF6B9D;
+        --border: #EEEFF3;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100vh;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { font-family: inherit; border: none; cursor: pointer; background: none; }
+
+    .shell {
+        max-width: 1200px;
+        margin: 24px auto;
+        display: flex;
+        gap: 20px;
+        padding: 0 20px;
+    }
+
+    /* ---- LEFT SIDEBAR ---- */
+    .sidebar {
+        width: 260px; flex-shrink: 0;
+        background: var(--card);
+        border-radius: 24px;
+        padding: 28px 20px;
+        height: fit-content;
+    }
+    .profile-top { text-align: center; margin-bottom: 20px; }
+    .profile-avatar {
+        width: 84px; height: 84px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        display:flex; align-items:center; justify-content:center;
+        font-size: 30px; font-weight: 700; color: white;
+        margin: 0 auto 12px;
+        border: 3px solid var(--card);
+        box-shadow: 0 0 0 3px var(--border);
+    }
+    .profile-top .name { font-weight: 700; font-size: 16px; }
+    .profile-top .id { font-size: 13px; color: var(--ink-faint); margin-top: 2px; }
+
+    .stats-row { display:flex; justify-content: space-around; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .stat { text-align:center; }
+    .stat .num { font-weight: 700; font-size: 15px; }
+    .stat .label { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+
+    .nav-list { display:flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+        display:flex; align-items:center; gap: 12px;
+        padding: 11px 12px; border-radius: 14px;
+        font-size: 14px; font-weight: 500; color: var(--ink-soft);
+    }
+    .nav-item:hover { background: var(--bg); }
+    .nav-item.active { background: var(--accent); color: white; font-weight: 600; }
+    .nav-item .ic { width: 20px; text-align:center; }
+
+    .logout-btn { margin-top: 12px; font-size: 13px; color: var(--ink-faint); padding: 11px 12px; }
+
+    /* ---- MAIN ---- */
+    .main-col { flex: 1; min-width: 0; }
+
+    .top-bar { display:flex; justify-content: space-between; align-items:center; margin-bottom: 24px; }
+    .search-box {
+        background: var(--card); border-radius: 999px; padding: 12px 20px;
+        display:flex; align-items:center; gap: 10px; flex: 1; max-width: 420px;
+        color: var(--ink-faint); font-size: 14px;
+    }
+    .search-box input { border:none; outline:none; background:transparent; flex:1; font-size:14px; font-family:inherit; color: var(--ink); }
+    .create-post-btn {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: white; font-weight: 600; font-size: 14px;
+        padding: 12px 22px; border-radius: 999px;
+    }
+
+    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+
+    /* ---- STORIES / TRUSTED MEMBERS ROW ---- */
+    .stories-row { display:flex; gap: 18px; overflow-x:auto; padding-bottom: 8px; margin-bottom: 30px; }
+    .story {
+        flex-shrink: 0; display:flex; flex-direction: column; align-items:center; gap: 8px; cursor: pointer;
+        width: 84px;
+    }
+    .story-ring {
+        width: 76px; height: 76px; border-radius: 50%;
+        padding: 3px;
+        background: conic-gradient(from 180deg, var(--accent-2), var(--accent), var(--accent-2));
+        display:flex; align-items:center; justify-content:center;
+    }
+    .story-ring.seen { background: var(--border); }
+    .story-avatar {
+        width: 100%; height: 100%; border-radius: 50%;
+        background: var(--card);
+        display:flex; align-items:center; justify-content:center;
+        font-weight: 700; font-size: 22px; color: var(--accent);
+        border: 3px solid var(--card);
+    }
+    .story .story-name { font-size: 12px; color: var(--ink-soft); text-align:center; max-width: 80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* ---- FEED GRID ---- */
+    .feed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+
+    .post-card { background: var(--card); border-radius: 20px; overflow:hidden; }
+    .post-card-head { display:flex; align-items:center; gap: 10px; padding: 14px 16px; }
+    .post-card-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        display:flex; align-items:center; justify-content:center;
+        font-weight: 700; font-size: 14px; color: white;
+    }
+    .post-card-head .who { font-weight: 600; font-size: 13.5px; }
+    .post-card-head .time { font-size: 11px; color: var(--ink-faint); }
+
+    .post-card-body { padding: 0 16px 16px; }
+    .post-card-body p { font-size: 14px; line-height: 1.5; color: var(--ink); }
+
+    .post-card-visual {
+        height: 160px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        display:flex; align-items:center; justify-content:center;
+        color: rgba(255,255,255,0.5); font-size: 12px;
+    }
+
+    .post-card-actions { display:flex; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); }
+    .post-card-actions button { font-size: 12px; color: var(--ink-soft); display:flex; align-items:center; gap: 5px; }
+
+    .empty-state { text-align:center; padding: 60px 20px; color: var(--ink-faint); font-size: 14px; grid-column: 1 / -1; }
+
+    @media (max-width: 800px) {
+        .sidebar { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="profile-top">
+            <div class="profile-avatar" id="pfAvatar">?</div>
+            <div class="name" id="pfName">—</div>
+            <div class="id" id="pfId">—</div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat"><div class="num" id="statScore">0</div><div class="label">Score</div></div>
+            <div class="stat"><div class="num" id="statReviews">0</div><div class="label">Reviews</div></div>
+            <div class="stat"><div class="num" id="statPosts">0</div><div class="label">Posts</div></div>
+        </div>
+
+        <nav class="nav-list">
+            <a href="index.html" class="nav-item active"><span class="ic">⌂</span> Home</a>
+            <a href="dashboard.html" class="nav-item"><span class="ic">◉</span> Profile</a>
+            <a href="community.html" class="nav-item"><span class="ic">◈</span> Community</a>
+            <a href="message.html" class="nav-item"><span class="ic">✉</span> Messages</a>
+            <a href="marketplace.html" class="nav-item"><span class="ic">▦</span> Marketplace</a>
+            <a href="review.html" class="nav-item"><span class="ic">★</span> Reviews</a>
+        </nav>
+
+        <button class="logout-btn" onclick="logout()">↩ Log out</button>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-col">
+        <div class="top-bar">
+            <div class="search-box">🔍 <input type="text" placeholder="Search a TrueLink ID..." id="searchInput"></div>
+            <button class="create-post-btn" onclick="window.location.href='community.html'">+ Create a post</button>
+        </div>
+
+        <h2 class="section-title">Recently trusted</h2>
+        <div class="stories-row" id="storiesRow">
+            <div class="empty-state" style="padding:10px;">No members yet — you're first.</div>
+        </div>
+
+        <h2 class="section-title">Feed</h2>
+        <div class="feed-grid" id="feedGrid">
+            <div class="empty-state">Loading...</div>
+        </div>
+    </main>
+
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
+    const { createClient } = supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    window.onload = async function() {
+        const { data: { user } } = await db.auth.getUser()
+        if (!user) { window.location.href = 'index.html'; return }
+
+        const meta = user.user_metadata
+        const name = ((meta.first_name || '') + ' ' + (meta.last_name || '')).trim() || 'TrueLink User'
+        const initial = name.charAt(0).toUpperCase()
+
+        document.getElementById('pfAvatar').textContent = initial
+        document.getElementById('pfName').textContent = name
+        document.getElementById('pfId').textContent = meta.truelink_id || ''
+
+        const { data: row } = await db.from('Truelink').select('*').eq('truelink_id', meta.truelink_id).single()
+        if (row) {
+            document.getElementById('statScore').textContent = row.trust_score || 0
+            document.getElementById('statReviews').textContent = row.review_count || 0
+        }
+
+        loadStories()
+        loadFeed()
+    }
+
+    async function loadStories() {
+        const { data } = await db.from('Truelink').select('first_name,last_name,truelink_id').limit(10)
+        const row = document.getElementById('storiesRow')
+        if (!data || data.length === 0) return
+
+        row.innerHTML = data.map(function(u) {
+            const name = (u.first_name || 'User')
+            const initial = name.charAt(0).toUpperCase()
+            return '<div class="story">' +
+                '<div class="story-ring"><div class="story-avatar">' + initial + '</div></div>' +
+                '<div class="story-name">' + escapeHtml(name) + '</div>' +
+            '</div>'
+        }).join('')
+    }
+
+    async function loadFeed() {
+        const { data } = await db.from('posts').select('*').order('created_at', { ascending: false }).limit(20)
+        const grid = document.getElementById('feedGrid')
+        document.getElementById('statPosts').textContent = data ? data.length : 0
+
+        if (!data || data.length === 0) {
+            grid.innerHTML = '<div class="empty-state">No posts yet. Head to Community to post something.</div>'
+            return
+        }
+
+        grid.innerHTML = data.map(function(post) {
+            const initial = post.author_name ? post.author_name.charAt(0).toUpperCase() : 'U'
+            const timeAgo = getTimeAgo(post.created_at)
+            return '<div class="post-card">' +
+                '<div class="post-card-head">' +
+                    '<div class="post-card-avatar">' + initial + '</div>' +
+                    '<div><div class="who">' + escapeHtml(post.author_name || 'TrueLink User') + '</div><div class="time">' + timeAgo + '</div></div>' +
+                '</div>' +
+                '<div class="post-card-body"><p>' + escapeHtml(post.content) + '</p></div>' +
+                '<div class="post-card-actions"><button>♡ Like</button><button>💬 Comment</button><button>↗ Share</button></div>' +
+            '</div>'
+        }).join('')
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div')
+        div.textContent = str
+        return div.innerHTML
+    }
+
+    function getTimeAgo(dateStr) {
+        const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+        if (diff < 60) return 'now'
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago'
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago'
+        return Math.floor(diff / 86400) + 'd ago'
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const id = this.value.trim().toUpperCase()
+            if (id) window.location.href = 'profile.html?id=' + id
+        }
+    })
+
+    async function logout() {
+        await db.auth.signOut()
+        window.location.href = 'index.html'
+    }
+</script>
+</body>
+</html>

@@ -319,7 +319,7 @@
                     <p class="text-xs text-gray-500 mt-1">Your unique Trust ID</p>
                 </div>
                 <p class="text-sm text-gray-500 mb-4">Share on Instagram, OLX, WhatsApp — anywhere!</p>
-                <button onclick="window.location.href='dashboard.html'"
+                <button onclick="window.location.href='home.html'"
                     class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
                     View My Dashboard →
                 </button>
@@ -414,7 +414,7 @@
         if (error) { showMsg('Login failed: ' + error.message, 'error'); return }
 
         showMsg('Login successful! Redirecting...', 'success')
-        setTimeout(() => window.location.href = 'dashboard.html', 1000)
+        setTimeout(() => window.location.href = 'home.html', 1000)
     }
 
     async function mGoStep2() {
