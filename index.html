@@ -417,29 +417,64 @@
         setTimeout(() => window.location.href = 'dashboard.html', 1000)
     }
 
-    function mGoStep2() {
-        const first = document.getElementById('mFirst').value.trim()
-        const last = document.getElementById('mLast').value.trim()
-        const email = document.getElementById('mEmail').value.trim()
-        const pass = document.getElementById('mPass').value
-        const terms = document.getElementById('mTerms').checked
+    async function mGoStep2() {
+    const first = document.getElementById('mFirst').value.trim()
+    const last = document.getElementById('mLast').value.trim()
+    const email = document.getElementById('mEmail').value.trim()
+    const pass = document.getElementById('mPass').value
+    const terms = document.getElementById('mTerms').checked
 
-        if (!first || !last) { showMsg('Please enter your full name.', 'error'); return }
-        if (!email || !email.includes('@')) { showMsg('Please enter a valid email.', 'error'); return }
-        if (pass.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); return }
-        if (!terms) { showMsg('Please agree to Terms and Privacy Policy.', 'error'); return }
+    if (!first || !last) { showMsg('Please enter your full name.', 'error'); return }
+    if (!email || !email.includes('@')) { showMsg('Please enter a valid email.', 'error'); return }
+    if (pass.length < 8) { showMsg('Password must be at least 8 characters.', 'error'); return }
+    if (!terms) { showMsg('Please agree to Terms and Privacy Policy.', 'error'); return }
 
-        mUserData = { first, last, email, pass }
-        document.getElementById('mPhoneShow').textContent = 'Enter your mobile number to verify'
+    mUserData = { first, last, email, pass }
 
-        document.getElementById('mSec1').classList.add('hidden')
-        document.getElementById('mSec2').classList.remove('hidden')
-        document.getElementById('ms1').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
-        document.getElementById('ms1').textContent = '✓'
-        document.getElementById('mline1').className = 'flex-1 h-0.5 bg-blue-600 mx-2'
-        document.getElementById('ms2').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
-        document.getElementById('ms2').textContent = '2'
+    // fingerprint check
+    showScan('Verifying this device...')
+    const { blocked, deviceHash } = await isDeviceAlreadyUsed()
+
+    if (blocked) {
+        hideScan()
+        showMsg('This device already has a TrueLink account linked to it.', 'error')
+        return
     }
+
+    showScan('Creating your TrueLink ID...')
+
+    const num = Math.floor(1000 + Math.random() * 9000)
+    const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const tlID = 'TL-' + num + '-' + L[Math.floor(Math.random()*26)] + L[Math.floor(Math.random()*26)]
+    mUserData.tlID = tlID
+
+    const { data: signUpData, error } = await db.auth.signUp({
+        email, password: pass,
+        options: { data: { first_name: first, last_name: last, truelink_id: tlID } }
+    })
+
+    hideScan()
+
+    if (error) { showMsg('Error: ' + error.message, 'error'); return }
+
+    await db.from('Truelink').insert({
+        email, first_name: first, last_name: last, truelink_id: tlID
+    })
+
+    if (signUpData && signUpData.user) {
+        await registerDevice(signUpData.user.id, deviceHash)
+    }
+
+    document.getElementById('mEmailShow').textContent = email
+
+    document.getElementById('mSec1').classList.add('hidden')
+    document.getElementById('mSec2').classList.remove('hidden')
+    document.getElementById('ms1').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
+    document.getElementById('ms1').textContent = '✓'
+    document.getElementById('mline1').className = 'flex-1 h-0.5 bg-blue-600 mx-2'
+    document.getElementById('ms2').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
+    document.getElementById('ms2').textContent = '2'
+}
 
     function mGoBack() {
         document.getElementById('mSec2').classList.add('hidden')
