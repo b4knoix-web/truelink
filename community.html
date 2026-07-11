@@ -4,128 +4,238 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TrueLink — Community</title>
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-    * { font-family: 'Inter', sans-serif; }
-    body { background: #0b0f1a; min-height: 100vh; }
-    .post-card { background: #12172a; border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .post-card:hover { background: #141a2e; }
-    .sidebar-link:hover { background: rgba(255,255,255,0.05); }
-    textarea:focus, input:focus { outline: none; }
-    .scrollbar::-webkit-scrollbar { width: 4px; }
-    .scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-    .icon-btn { color: #4f9dff; transition: background 0.15s; }
-    .icon-btn:hover { background: rgba(79,157,255,0.1); border-radius: 50%; }
-    .avatar-ring {
-        background: linear-gradient(135deg, #4f9dff, #7b5fff);
+    :root {
+        --bg-base: #000000;
+        --bg-elevated: #1C1C1E;
+        --bg-elevated-2: #2C2C2E;
+        --label-primary: rgba(255,255,255,0.95);
+        --label-secondary: rgba(255,255,255,0.55);
+        --label-tertiary: rgba(255,255,255,0.32);
+        --separator: rgba(255,255,255,0.1);
+        --accent: #0A84FF;
+        --system-red: #FF453A;
+        --system-green: #30D158;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+        background: var(--bg-base);
+        color: var(--label-primary);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; border: none; cursor: pointer; background: none; color: inherit; }
+
+    /* ---- 8pt grid spacing system ---- */
+    .container { max-width: 1120px; margin: 0 auto; display: flex; }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar { width: 280px; flex-shrink: 0; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; padding: 24px 16px; }
+    .logo-row { display:flex; align-items:center; gap:12px; padding: 8px 12px 32px; }
+    .logo-row span { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
+
+    .nav-item {
+        display:flex; align-items:center; gap:16px;
+        padding: 12px 12px; border-radius: 12px;
+        font-size: 17px; font-weight: 500;
+        color: var(--label-secondary);
+        min-height: 44px;
+        transition: background 0.15s;
+    }
+    .nav-item:hover { background: var(--bg-elevated); }
+    .nav-item.active { color: var(--label-primary); font-weight: 700; }
+    .nav-icon { width: 22px; text-align: center; font-size: 18px; }
+
+    .compose-btn {
+        margin-top: 20px;
+        background: var(--accent);
+        color: white;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 12px;
+        border-radius: 999px;
+        min-height: 44px;
+    }
+
+    .profile-chip {
+        margin-top: auto;
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px; border-radius: 999px;
+        cursor: pointer;
+        min-height: 44px;
+    }
+    .profile-chip:hover { background: var(--bg-elevated); }
+    .avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), #5E5CE6);
+        display:flex; align-items:center; justify-content:center;
+        font-weight: 600; font-size: 14px; flex-shrink: 0;
+    }
+    .profile-chip .name { font-size: 14px; font-weight: 600; line-height: 1.2; }
+    .profile-chip .handle { font-size: 12px; color: var(--label-tertiary); }
+
+    /* ---- MAIN FEED ---- */
+    .feed-col { width: 600px; flex-shrink: 0; border-left: 1px solid var(--separator); border-right: 1px solid var(--separator); min-height: 100vh; }
+
+    .feed-header {
+        position: sticky; top: 0; z-index: 10;
+        background: rgba(0,0,0,0.72);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--separator);
+        padding: 16px 20px;
+    }
+    .feed-header h1 { font-size: 20px; font-weight: 700; }
+    .feed-header p { font-size: 13px; color: var(--label-tertiary); margin-top: 2px; }
+
+    /* ---- COMPOSER ---- */
+    .composer { display:flex; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--separator); }
+    .composer textarea {
+        flex: 1; background: transparent; border: none; outline: none;
+        color: var(--label-primary); font-size: 17px; font-family: inherit;
+        resize: none; line-height: 1.4; padding-top: 6px;
+    }
+    .composer textarea::placeholder { color: var(--label-tertiary); }
+
+    .composer-actions { display:flex; justify-content: space-between; align-items:center; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
+    .media-icons { display:flex; gap: 2px; }
+    .media-icons button { width: 36px; height: 36px; border-radius: 50%; display:flex; align-items:center; justify-content:center; color: var(--accent); font-size: 16px; }
+    .media-icons button:hover { background: rgba(10,132,255,0.12); }
+
+    .char-count { font-size: 12px; color: var(--label-tertiary); margin-right: 12px; }
+    .post-submit-btn {
+        background: var(--accent); color: white; font-size: 14px; font-weight: 700;
+        padding: 8px 18px; border-radius: 999px; min-height: 36px;
+    }
+    .post-submit-btn:disabled { opacity: 0.4; }
+
+    .status-msg { font-size: 12px; text-align:center; padding: 8px 20px; display:none; }
+    .status-msg.error { color: var(--system-red); }
+    .status-msg.success { color: var(--system-green); }
+
+    /* ---- FEED ITEMS ---- */
+    .post {
+        display:flex; gap: 12px; padding: 16px 20px;
+        border-bottom: 1px solid var(--separator);
+        transition: background 0.1s;
+    }
+    .post:hover { background: rgba(255,255,255,0.02); }
+    .post-body { flex: 1; min-width: 0; }
+    .post-meta { display:flex; align-items:baseline; gap: 6px; font-size: 15px; }
+    .post-meta .name { font-weight: 700; }
+    .post-meta .handle, .post-meta .time { color: var(--label-tertiary); font-size: 14px; }
+    .post-text { font-size: 17px; line-height: 1.4; margin-top: 2px; color: var(--label-primary); word-wrap: break-word; }
+    .post-actions { display:flex; gap: 48px; margin-top: 10px; }
+    .post-actions button { display:flex; align-items:center; gap: 6px; font-size: 13px; color: var(--label-tertiary); }
+    .post-actions button:hover { color: var(--accent); }
+
+    .empty-state { text-align:center; padding: 64px 20px; color: var(--label-tertiary); font-size: 15px; }
+
+    /* ---- RIGHT PANEL ---- */
+    .right-col { width: 320px; flex-shrink: 0; padding: 24px 20px; display: none; }
+    @media (min-width: 1024px) { .right-col { display: block; } }
+
+    .info-card { background: var(--bg-elevated); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .info-card .card-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; display:flex; align-items:center; gap: 8px; }
+    .info-card p { font-size: 13px; color: var(--label-secondary); line-height: 1.5; }
+    .info-card a.link { color: var(--accent); font-size: 13px; font-weight: 600; margin-top: 10px; display: block; }
+    .info-card ul { list-style: none; margin-top: 8px; }
+    .info-card li { font-size: 13px; color: var(--label-secondary); padding: 4px 0; }
+
+    @media (max-width: 900px) {
+        .sidebar { width: 72px; }
+        .sidebar .nav-item span.label, .logo-row span, .compose-btn span, .profile-chip .name, .profile-chip .handle { display: none; }
+        .nav-item { justify-content: center; }
+        .compose-btn { display:flex; align-items:center; justify-content:center; }
+        .feed-col { width: 100%; border-right: none; }
     }
 </style>
 </head>
-<body class="text-white">
+<body>
 
-<div class="flex max-w-6xl mx-auto">
+<div class="container">
 
-    <!-- LEFT SIDEBAR -->
-    <div class="w-64 shrink-0 h-screen sticky top-0 flex flex-col border-r border-white/5 px-3 py-5 hidden md:flex">
-        <div class="flex items-center gap-2 px-3 mb-8">
-            <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
-                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-                <path d="M51 52 L68 65" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo-row">
+            <svg width="26" height="26" viewBox="0 0 100 100" fill="none">
+                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="11" stroke-linecap="round" fill="none"/>
+                <path d="M51 52 L68 65" stroke="white" stroke-width="11" stroke-linecap="round" fill="none"/>
+                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
-            <span class="font-bold text-sm tracking-widest">TRUELINK</span>
+            <span>TrueLink</span>
         </div>
 
-        <nav class="flex flex-col gap-1 text-[15px]">
-            <a href="index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">🏠 Home</a>
-            <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">👤 Dashboard</a>
-            <a href="message.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">💬 Messages</a>
-            <a href="community.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full font-bold bg-white/5">🌐 Community</a>
-            <a href="marketplace.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">🛒 Marketplace</a>
+        <nav>
+            <a href="index.html" class="nav-item"><span class="nav-icon">⌂</span><span class="label">Home</span></a>
+            <a href="dashboard.html" class="nav-item"><span class="nav-icon">◉</span><span class="label">Profile</span></a>
+            <a href="message.html" class="nav-item"><span class="nav-icon">✉</span><span class="label">Messages</span></a>
+            <a href="community.html" class="nav-item active"><span class="nav-icon">◈</span><span class="label">Community</span></a>
+            <a href="marketplace.html" class="nav-item"><span class="nav-icon">▦</span><span class="label">Marketplace</span></a>
         </nav>
 
-        <button onclick="document.getElementById('postInput').focus()"
-            class="mt-6 bg-blue-500 hover:bg-blue-600 rounded-full py-3 font-bold text-sm">
-            Post
-        </button>
+        <button class="compose-btn" onclick="document.getElementById('postInput').focus()"><span>Post</span></button>
 
-        <div class="mt-auto flex items-center gap-2 px-3 py-3 rounded-full hover:bg-white/5 cursor-pointer" id="sidebarProfile">
-            <div class="avatar-ring w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs" id="sbAvatar">?</div>
-            <div class="min-w-0">
-                <div class="text-sm font-semibold truncate" id="sbName">—</div>
-                <div class="text-xs text-white/40 truncate" id="sbHandle">—</div>
+        <div class="profile-chip" id="sidebarProfile">
+            <div class="avatar" id="sbAvatar">?</div>
+            <div>
+                <div class="name" id="sbName">—</div>
+                <div class="handle" id="sbHandle">—</div>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <!-- CENTER FEED -->
-    <div class="flex-1 max-w-xl border-r border-white/5 min-h-screen">
-        <div class="sticky top-0 bg-[#0b0f1a]/90 backdrop-blur border-b border-white/5 px-5 py-3 z-10">
-            <h1 class="font-bold text-base">Community</h1>
-            <p class="text-white/40 text-xs mt-0.5">Aurea reads this feed to learn how TrueLink actually talks.</p>
+    <!-- FEED -->
+    <main class="feed-col">
+        <div class="feed-header">
+            <h1>Community</h1>
+            <p>Aurea reads this feed to learn how TrueLink actually talks</p>
         </div>
 
-        <!-- COMPOSER -->
-        <div class="flex gap-3 px-5 py-4 border-b border-white/5">
-            <div class="avatar-ring w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" id="composerAvatar">?</div>
-            <div class="flex-1">
-                <textarea id="postInput" placeholder="What's happening?" rows="2"
-                    class="w-full bg-transparent text-[15px] placeholder-white/30 resize-none"></textarea>
-
-                <!-- media preview (future upload support) -->
-                <div id="mediaPreview" class="hidden mb-2 rounded-xl overflow-hidden border border-white/10"></div>
-
-                <div class="flex justify-between items-center mt-2 border-t border-white/5 pt-2">
-                    <div class="flex items-center gap-1">
-                        <button class="icon-btn p-2" onclick="mediaComingSoon('image')" title="Image">🖼️</button>
-                        <button class="icon-btn p-2" onclick="mediaComingSoon('gif')" title="GIF">GIF</button>
-                        <button class="icon-btn p-2" onclick="mediaComingSoon('video')" title="Video">🎥</button>
-                        <button class="icon-btn p-2" onclick="insertEmoji()" title="Emoji">😊</button>
+        <div class="composer">
+            <div class="avatar" id="composerAvatar">?</div>
+            <div style="flex:1;">
+                <textarea id="postInput" placeholder="What's happening?" rows="2"></textarea>
+                <div class="composer-actions">
+                    <div class="media-icons">
+                        <button onclick="mediaComingSoon('image')" title="Image">🖼</button>
+                        <button onclick="mediaComingSoon('gif')" title="GIF">GIF</button>
+                        <button onclick="mediaComingSoon('video')" title="Video">▶</button>
+                        <button onclick="insertEmoji()" title="Emoji">☺</button>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-white/30" id="charCount">0/280</span>
-                        <button onclick="submitPost()" id="postBtn"
-                            class="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 rounded-full px-5 py-1.5 text-sm font-bold">
-                            Post
-                        </button>
+                    <div style="display:flex; align-items:center;">
+                        <span class="char-count" id="charCount">0/280</span>
+                        <button class="post-submit-btn" id="postBtn" onclick="submitPost()">Post</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="msgBox" class="hidden text-xs px-5 py-2 text-center"></div>
+        <div class="status-msg" id="msgBox"></div>
 
-        <!-- FEED -->
-        <div id="feed" class="scrollbar">
-            <div class="text-center text-white/30 text-sm py-10" id="loadingState">Loading posts...</div>
+        <div id="feed">
+            <div class="empty-state" id="loadingState">Loading posts…</div>
         </div>
-    </div>
+    </main>
 
-    <!-- RIGHT SIDEBAR -->
-    <div class="w-80 shrink-0 px-5 py-5 hidden lg:block">
-        <div class="bg-[#12172a] border border-white/10 rounded-2xl p-4 mb-4">
-            <div class="flex items-center gap-2 mb-2">
-                <div class="avatar-ring w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">A</div>
-                <div>
-                    <div class="text-sm font-bold">Aurea</div>
-                    <div class="text-[10px] text-white/40">TrueLink's trust engine</div>
-                </div>
-            </div>
-            <p class="text-xs text-white/50 leading-relaxed">Every post here shapes how Aurea talks. No sugarcoating, just real community language.</p>
-            <a href="message.html" class="block mt-3 text-xs text-blue-400 font-semibold">Chat with Aurea →</a>
+    <!-- RIGHT PANEL -->
+    <aside class="right-col">
+        <div class="info-card">
+            <div class="card-title"><span class="avatar" style="width:24px;height:24px;font-size:11px;">A</span> Aurea</div>
+            <p>TrueLink's trust engine. Every post here shapes how she talks — no sugarcoating, just real community language.</p>
+            <a href="message.html" class="link">Chat with Aurea →</a>
         </div>
-
-        <div class="bg-[#12172a] border border-white/10 rounded-2xl p-4">
-            <div class="text-sm font-bold mb-3">Community guidelines</div>
-            <ul class="text-xs text-white/50 space-y-2 leading-relaxed">
-                <li>• Be real — Aurea learns tone from what's posted here</li>
-                <li>• No personal data of others without consent</li>
-                <li>• Posts are public to all TrueLink members</li>
+        <div class="info-card">
+            <div class="card-title">Community guidelines</div>
+            <ul>
+                <li>· Be real — Aurea learns tone from what's posted here</li>
+                <li>· No personal data of others without consent</li>
+                <li>· Posts are public to all TrueLink members</li>
             </ul>
         </div>
-    </div>
+    </aside>
 
 </div>
 
@@ -139,10 +249,7 @@
 
     window.onload = async function() {
         const { data: { user } } = await db.auth.getUser()
-        if (!user) {
-            window.location.href = 'index.html'
-            return
-        }
+        if (!user) { window.location.href = 'index.html'; return }
         currentUser = user
 
         const meta = user.user_metadata
@@ -163,10 +270,7 @@
         if (len > 280) this.value = this.value.slice(0, 280)
     })
 
-    function mediaComingSoon(type) {
-        showMsg('Uploading ' + type + ' — coming soon.', 'error')
-    }
-
+    function mediaComingSoon(type) { showMsg('Uploading ' + type + ' — coming soon.', 'error') }
     function insertEmoji() {
         const input = document.getElementById('postInput')
         input.value += ' 🙂'
@@ -176,11 +280,9 @@
     function showMsg(text, type) {
         const el = document.getElementById('msgBox')
         el.textContent = text
-        el.className = type === 'error'
-            ? 'text-xs px-5 py-2 text-center text-red-300'
-            : 'text-xs px-5 py-2 text-center text-green-300'
-        el.classList.remove('hidden')
-        setTimeout(function() { el.classList.add('hidden') }, 3000)
+        el.className = 'status-msg ' + type
+        el.style.display = 'block'
+        setTimeout(function() { el.style.display = 'none' }, 3000)
     }
 
     async function submitPost() {
@@ -190,7 +292,7 @@
 
         const btn = document.getElementById('postBtn')
         btn.disabled = true
-        btn.textContent = 'Posting...'
+        btn.textContent = 'Posting…'
 
         const meta = currentUser.user_metadata
         const authorName = ((meta.first_name || '') + ' ' + (meta.last_name || '')).trim() || 'TrueLink User'
@@ -205,17 +307,16 @@
         btn.disabled = false
         btn.textContent = 'Post'
 
-        if (error) {
-            showMsg('Failed to post: ' + error.message, 'error')
-            return
-        }
-        // ---- LEARNING: classify this post and store as a pattern ----
+        if (error) { showMsg('Failed to post: ' + error.message, 'error'); return }
+
         classifyAndLearn(content)
+
         document.getElementById('postInput').value = ''
         document.getElementById('charCount').textContent = '0/280'
         showMsg('Posted!', 'success')
         loadFeed()
     }
+
     function classifyAndLearn(content) {
         const lower = content.toLowerCase()
         const hindiWords = ['hai','kya','kaise','nahi','kar','ka','ke','ki','mujhe','tera','mera','bhai']
@@ -223,51 +324,35 @@
 
         let tag = 'casual'
         if (/(good|great|solid|trust|helpful|badhiya|achha|shandar)/.test(lower)) tag = 'praise'
-        if (/(careful|scam|fraud|fake|red flag|risky|dhyan|dhoka|fraud)/.test(lower)) tag = 'warning'
+        if (/(careful|scam|fraud|fake|red flag|risky|dhyan|dhoka)/.test(lower)) tag = 'warning'
         if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) tag = 'greeting'
 
-        db.from('learned_patterns').insert({
-            content: content,
-            tag: tag,
-            language: lang,
-            source_post_id: null
-        })
+        db.from('learned_patterns').insert({ content: content, tag: tag, language: lang, source_post_id: null })
     }
-    async function loadFeed() {
-        const { data, error } = await db
-            .from('posts')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(50)
 
+    async function loadFeed() {
+        const { data, error } = await db.from('posts').select('*').order('created_at', { ascending: false }).limit(50)
         const feedEl = document.getElementById('feed')
 
-        if (error) {
-            feedEl.innerHTML = '<div class="text-center text-red-300 text-sm py-10">Could not load posts.</div>'
-            return
-        }
-
-        if (!data || data.length === 0) {
-            feedEl.innerHTML = '<div class="text-center text-white/30 text-sm py-10">No posts yet. Be the first.</div>'
-            return
-        }
+        if (error) { feedEl.innerHTML = '<div class="empty-state">Could not load posts.</div>'; return }
+        if (!data || data.length === 0) { feedEl.innerHTML = '<div class="empty-state">No posts yet. Be the first.</div>'; return }
 
         feedEl.innerHTML = data.map(function(post) {
             const timeAgo = getTimeAgo(post.created_at)
             const initial = post.author_name ? post.author_name.charAt(0).toUpperCase() : 'U'
-            return '<div class="post-card px-5 py-4 flex gap-3">' +
-                '<div class="avatar-ring w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0">' + initial + '</div>' +
-                '<div class="flex-1 min-w-0">' +
-                    '<div class="flex items-center gap-1.5 text-sm">' +
-                        '<span class="font-bold">' + escapeHtml(post.author_name || 'TrueLink User') + '</span>' +
-                        '<span class="text-white/30 text-xs">' + (post.truelink_id || '') + '</span>' +
-                        '<span class="text-white/30 text-xs">· ' + timeAgo + '</span>' +
+            return '<div class="post">' +
+                '<div class="avatar">' + initial + '</div>' +
+                '<div class="post-body">' +
+                    '<div class="post-meta">' +
+                        '<span class="name">' + escapeHtml(post.author_name || 'TrueLink User') + '</span>' +
+                        '<span class="handle">' + (post.truelink_id || '') + '</span>' +
+                        '<span class="time">· ' + timeAgo + '</span>' +
                     '</div>' +
-                    '<p class="text-[15px] text-white/90 leading-relaxed mt-0.5 mb-2 break-words">' + escapeHtml(post.content) + '</p>' +
-                    '<div class="flex items-center gap-8 text-white/40 text-xs mt-1">' +
-                        '<span class="flex items-center gap-1.5 cursor-pointer hover:text-blue-400">💬 <span>0</span></span>' +
-                        '<span class="flex items-center gap-1.5 cursor-pointer hover:text-red-400">❤️ <span>' + (post.likes || 0) + '</span></span>' +
-                        '<span class="flex items-center gap-1.5 cursor-pointer hover:text-green-400">🔁 <span>0</span></span>' +
+                    '<div class="post-text">' + escapeHtml(post.content) + '</div>' +
+                    '<div class="post-actions">' +
+                        '<button>💬 <span>0</span></button>' +
+                        '<button>🔁 <span>0</span></button>' +
+                        '<button>♡ <span>' + (post.likes || 0) + '</span></button>' +
                     '</div>' +
                 '</div>' +
             '</div>'
