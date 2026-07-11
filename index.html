@@ -6,6 +6,7 @@
     <title>TrueLink — Trust. Verified.</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
@@ -41,6 +42,43 @@
             background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,20,60,0.3) 100%);
             min-height: 100vh;
         }
+
+        /* FINGERPRINT SCAN OVERLAY */
+        .scan-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .scan-overlay.show { display: flex; }
+        .scan-box { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .scan-ring {
+            width: 90px; height: 90px; border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.15);
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 30px rgba(80,150,255,0.4);
+        }
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, #4f9dff, transparent);
+            animation: scanMove 1.4s ease-in-out infinite;
+            box-shadow: 0 0 12px #4f9dff;
+        }
+        @keyframes scanMove {
+            0%   { top: 0%; }
+            50%  { top: 96%; }
+            100% { top: 0%; }
+        }
+        .scan-text {
+            color: white; font-size: 14px; font-weight: 500;
+            letter-spacing: 0.3px;
+            animation: pulseText 1.4s ease-in-out infinite;
+        }
+        @keyframes pulseText { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -154,6 +192,14 @@
         © 2026 TrueLink · Trust. Verified.
     </div>
 
+</div>
+
+<!-- FINGERPRINT SCAN OVERLAY -->
+<div id="scanOverlay" class="scan-overlay">
+    <div class="scan-box">
+        <div class="scan-ring"><div class="scan-line"></div></div>
+        <div class="scan-text" id="scanText">Verifying this device...</div>
+    </div>
 </div>
 
 <!-- AUTH MODAL -->
@@ -426,25 +472,74 @@
         setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend' }, 30000)
     }
 
+    /* ---- FINGERPRINT HELPERS ---- */
+    async function getDeviceFingerprint() {
+        const fp = await FingerprintJS.load()
+        const result = await fp.get()
+        return result.visitorId
+    }
+
+    function showScan(text) {
+        document.getElementById('scanText').textContent = text || 'Verifying this device...'
+        document.getElementById('scanOverlay').classList.add('show')
+    }
+
+    function hideScan() {
+        document.getElementById('scanOverlay').classList.remove('show')
+    }
+
+    async function isDeviceAlreadyUsed() {
+        const deviceHash = await getDeviceFingerprint()
+        const { data: existing } = await db
+            .from('device_registry')
+            .select('*')
+            .eq('device_hash', deviceHash)
+        return { blocked: existing && existing.length > 0, deviceHash }
+    }
+
+    async function registerDevice(userId, deviceHash) {
+        await db.from('device_registry').insert({ user_id: userId, device_hash: deviceHash })
+    }
+
     async function mGoStep3() {
         if (!mOtpSent) { showMsg('Please send OTP first.', 'error'); return }
         const otp = document.getElementById('mOTP').value.trim()
         if (otp !== '123456') { showMsg('Incorrect OTP. Demo: 123456', 'error'); return }
 
+        // ---- FINGERPRINT CHECK BEFORE CREATING ACCOUNT ----
+        showScan('Verifying this device...')
+        const { blocked, deviceHash } = await isDeviceAlreadyUsed()
+
+        if (blocked) {
+            hideScan()
+            showMsg('This device already has a TrueLink account linked to it.', 'error')
+            return
+        }
+
+        showScan('Creating your TrueLink ID...')
+
         const num = Math.floor(1000 + Math.random() * 9000)
         const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         const tlID = 'TL-' + num + '-' + L[Math.floor(Math.random()*26)] + L[Math.floor(Math.random()*26)]
 
-        const { error } = await db.auth.signUp({
+        const { data: signUpData, error } = await db.auth.signUp({
             email: mUserData.email, password: mUserData.pass,
             options: { data: { first_name: mUserData.first, last_name: mUserData.last, phone: mUserData.phone, truelink_id: tlID } }
         })
-        if (error) { showMsg('Error: ' + error.message, 'error'); return }
+
+        if (error) { hideScan(); showMsg('Error: ' + error.message, 'error'); return }
 
         await db.from('Truelink').insert({
             email: mUserData.email, first_name: mUserData.first,
             last_name: mUserData.last, phone: mUserData.phone, truelink_id: tlID
         })
+
+        // register this device against the new user
+        if (signUpData && signUpData.user) {
+            await registerDevice(signUpData.user.id, deviceHash)
+        }
+
+        hideScan()
 
         document.getElementById('mGeneratedID').textContent = tlID
         document.getElementById('mSec2').classList.add('hidden')
