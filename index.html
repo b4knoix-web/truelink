@@ -298,27 +298,14 @@
             </div>
 
             <!-- STEP 2 -->
-            <div id="mSec2" class="hidden">
-                <div class="text-center mb-5">
-                    <h2 class="text-xl font-bold text-gray-900">Verify Your Phone</h2>
-                    <p class="text-gray-500 text-sm mt-1" id="mPhoneShow"></p>
-                </div>
-                <div class="space-y-3">
-                    <input type="text" id="mPhone" placeholder="10-digit mobile number"
-                        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
-                    <div class="flex gap-2">
-                        <input type="text" id="mOTP" placeholder="6-digit OTP" maxlength="6"
-                            class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:border-blue-400 transition-all">
-                        <button onclick="mSendOTP()" id="mOTPBtn"
-                            class="px-4 py-3 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 whitespace-nowrap">
-                            Send OTP
-                        </button>
-                    </div>
-                    <p id="mOTPHint" class="text-xs text-blue-600 hidden">✓ OTP sent! Demo: <strong>123456</strong></p>
-                </div>
-                <button onclick="mGoStep3()"
-                    class="w-full mt-4 py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
-                    Verify & Get My ID →
+            <div id="mSec2" class="hidden text-center py-4">
+                 <div class="text-4xl mb-3">📧</div>
+                 <h2 class="text-xl font-bold text-gray-900 mb-2">Check your email</h2>
+                 <p class="text-gray-500 text-sm mb-1">We sent a verification link to</p>
+                 <p class="text-blue-600 text-sm font-semibold mb-5" id="mEmailShow"></p>
+                 <button onclick="mCheckVerified()" id="mCheckBtn"
+                     class="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl text-sm hover:bg-blue-700 transition-all">
+                     I've verified my email →
                 </button>
                 <button onclick="mGoBack()" class="w-full mt-2 py-2 text-sm text-gray-500 hover:text-gray-700">← Back</button>
             </div>
