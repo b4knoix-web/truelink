@@ -215,7 +215,30 @@
                 return { text: fillTemplate(pick(patternBank.safe_confirm[lang]), { name: user.name, id: user.id, reasons: reasons }), type: 'ai' }
             }
         }
+
+        // ---- try learned community patterns before giving up ----
+        const learned = await getLearnedResponse(userText, lang)
+        if (learned) return { text: learned, type: 'ai' }
+
         return { text: pick(patternBank.unknown[lang]), type: 'ai' }
+    }
+
+    async function getLearnedResponse(userText, lang) {
+        const lower = userText.toLowerCase()
+        let tag = 'casual'
+        if (/(good|great|solid|trust|helpful|badhiya|achha|shandar)/.test(lower)) tag = 'praise'
+        if (/(careful|scam|fraud|fake|red flag|risky|dhyan|dhoka)/.test(lower)) tag = 'warning'
+
+        const { data } = await db
+            .from('learned_patterns')
+            .select('content')
+            .eq('tag', tag)
+            .eq('language', lang)
+            .order('created_at', { ascending: false })
+            .limit(20)
+
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].content
     }
 
     const chatEl = document.getElementById('chat')
@@ -248,5 +271,3 @@
 
     addMessage(pick(patternBank.greeting.en), 'ai')
 </script>
-</body>
-</html>

@@ -209,13 +209,30 @@
             showMsg('Failed to post: ' + error.message, 'error')
             return
         }
-
+        // ---- LEARNING: classify this post and store as a pattern ----
+        classifyAndLearn(content)
         document.getElementById('postInput').value = ''
         document.getElementById('charCount').textContent = '0/280'
         showMsg('Posted!', 'success')
         loadFeed()
     }
+    function classifyAndLearn(content) {
+        const lower = content.toLowerCase()
+        const hindiWords = ['hai','kya','kaise','nahi','kar','ka','ke','ki','mujhe','tera','mera','bhai']
+        const lang = hindiWords.filter(w => lower.includes(w)).length >= 1 ? 'hi' : 'en'
 
+        let tag = 'casual'
+        if (/(good|great|solid|trust|helpful|badhiya|achha|shandar)/.test(lower)) tag = 'praise'
+        if (/(careful|scam|fraud|fake|red flag|risky|dhyan|dhoka|fraud)/.test(lower)) tag = 'warning'
+        if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) tag = 'greeting'
+
+        db.from('learned_patterns').insert({
+            content: content,
+            tag: tag,
+            language: lang,
+            source_post_id: null
+        })
+    }
     async function loadFeed() {
         const { data, error } = await db
             .from('posts')
