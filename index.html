@@ -481,19 +481,6 @@
         document.getElementById('mSec1').classList.remove('hidden')
     }
 
-    function mSendOTP() {
-        const phone = document.getElementById('mPhone').value.trim()
-        if (phone.length !== 10 || isNaN(phone)) { showMsg('Enter a valid 10-digit phone number.', 'error'); return }
-
-        mUserData.phone = phone
-        mOtpSent = true
-        document.getElementById('mOTPHint').classList.remove('hidden')
-        const btn = document.getElementById('mOTPBtn')
-        btn.disabled = true
-        btn.textContent = 'Sent!'
-        setTimeout(() => { btn.disabled = false; btn.textContent = 'Resend' }, 30000)
-    }
-
     /* ---- FINGERPRINT HELPERS ---- */
     async function getDeviceFingerprint() {
         const fp = await FingerprintJS.load()
@@ -523,52 +510,25 @@
         await db.from('device_registry').insert({ user_id: userId, device_hash: deviceHash })
     }
 
-    async function mGoStep3() {
-        if (!mOtpSent) { showMsg('Please send OTP first.', 'error'); return }
-        const otp = document.getElementById('mOTP').value.trim()
-        if (otp !== '123456') { showMsg('Incorrect OTP. Demo: 123456', 'error'); return }
+    async function mCheckVerified() {
+        const btn = document.getElementById('mCheckBtn')
+        btn.textContent = 'Checking...'
+        btn.disabled = true
 
-        // ---- FINGERPRINT CHECK BEFORE CREATING ACCOUNT ----
-        showScan('Verifying this device...')
-        const { blocked, deviceHash } = await isDeviceAlreadyUsed()
+        const { data: { user } } = await db.auth.getUser()
 
-        if (blocked) {
-            hideScan()
-            showMsg('This device already has a TrueLink account linked to it.', 'error')
-            return
+        if (user && user.email_confirmed_at) {
+            document.getElementById('mGeneratedID').textContent = mUserData.tlID
+            document.getElementById('mSec2').classList.add('hidden')
+            document.getElementById('mSec3').classList.remove('hidden')
+            document.getElementById('ms2').textContent = '✓'
+            document.getElementById('mline2').className = 'flex-1 h-0.5 bg-blue-600 mx-2'
+            document.getElementById('ms3').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
+        } else {
+            showMsg('Not verified yet. Please check your email and click the link.', 'error')
+            btn.textContent = "I've verified my email →"
+            btn.disabled = false
         }
-
-        showScan('Creating your TrueLink ID...')
-
-        const num = Math.floor(1000 + Math.random() * 9000)
-        const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        const tlID = 'TL-' + num + '-' + L[Math.floor(Math.random()*26)] + L[Math.floor(Math.random()*26)]
-
-        const { data: signUpData, error } = await db.auth.signUp({
-            email: mUserData.email, password: mUserData.pass,
-            options: { data: { first_name: mUserData.first, last_name: mUserData.last, phone: mUserData.phone, truelink_id: tlID } }
-        })
-
-        if (error) { hideScan(); showMsg('Error: ' + error.message, 'error'); return }
-
-        await db.from('Truelink').insert({
-            email: mUserData.email, first_name: mUserData.first,
-            last_name: mUserData.last, phone: mUserData.phone, truelink_id: tlID
-        })
-
-        // register this device against the new user
-        if (signUpData && signUpData.user) {
-            await registerDevice(signUpData.user.id, deviceHash)
-        }
-
-        hideScan()
-
-        document.getElementById('mGeneratedID').textContent = tlID
-        document.getElementById('mSec2').classList.add('hidden')
-        document.getElementById('mSec3').classList.remove('hidden')
-        document.getElementById('ms2').textContent = '✓'
-        document.getElementById('mline2').className = 'flex-1 h-0.5 bg-blue-600 mx-2'
-        document.getElementById('ms3').className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold'
     }
 
     function searchID() {
