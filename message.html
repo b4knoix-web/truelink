@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueLink — Messages</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #0b0f1a; height: 100vh; overflow: hidden; }
+
+    .sidebar { background: #12172a; border-right: 1px solid rgba(255,255,255,0.06); }
+    .convo-item { transition: background 0.15s; cursor: pointer; }
+    .convo-item:hover { background: rgba(255,255,255,0.04); }
+    .convo-item.active { background: rgba(79,157,255,0.1); border-left: 3px solid #4f9dff; }
+
+    .aurea-avatar {
+        background: linear-gradient(135deg, #4f9dff, #7b5fff);
+        box-shadow: 0 0 20px rgba(79,157,255,0.4);
+    }
+    .pulse-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: #4ade80; box-shadow: 0 0 8px #4ade80;
+    }
+
+    .chat-area { background: #0b0f1a; }
+    .msg-bubble {
+        max-width: 75%;
+        padding: 10px 14px;
+        border-radius: 16px;
+        font-size: 13.5px;
+        line-height: 1.5;
+    }
+    .msg-bubble.ai {
+        background: #1c2340;
+        color: #e4e7f0;
+        border-bottom-left-radius: 4px;
+        align-self: flex-start;
+    }
+    .msg-bubble.user {
+        background: #4f9dff;
+        color: white;
+        border-bottom-right-radius: 4px;
+        align-self: flex-end;
+    }
+    .msg-bubble.flag {
+        background: rgba(255,90,90,0.12);
+        border: 1px solid rgba(255,90,90,0.3);
+        color: #ff9b9b;
+        border-bottom-left-radius: 4px;
+        align-self: flex-start;
+    }
+
+    .chat-scroll::-webkit-scrollbar { width: 4px; }
+    .chat-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .empty-state { color: #565d75; }
+</style>
+</head>
+<body class="flex text-white">
+
+<!-- SIDEBAR -->
+<div class="sidebar w-full max-w-sm flex flex-col h-screen">
+    <div class="p-5 border-b border-white/5">
+        <div class="flex items-center gap-2 mb-4">
+            <svg width="22" height="22" viewBox="0 0 100 100" fill="none">
+                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M51 52 L68 65" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span class="font-bold text-sm tracking-widest">TRUELINK</span>
+        </div>
+        <a href="index.html" class="text-xs text-white/40 hover:text-white">← Back to home</a>
+    </div>
+
+    <div class="px-5 py-3 text-xs text-white/40 uppercase tracking-widest">Messages</div>
+
+    <div class="flex-1 overflow-y-auto" id="convoList">
+        <!-- AUREA — always pinned -->
+        <div class="convo-item active flex items-center gap-3 px-5 py-3" onclick="openAurea()">
+            <div class="aurea-avatar w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm relative">
+                A
+                <span class="pulse-dot absolute -bottom-0.5 -right-0.5 border-2 border-[#12172a]"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                    <span class="font-semibold text-sm">Aurea</span>
+                    <span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded-full font-medium">AI</span>
+                </div>
+                <p class="text-xs text-white/40 truncate">TrueLink's trust engine — always on</p>
+            </div>
+        </div>
+
+        <div class="empty-state text-center text-xs px-5 py-10">
+            No other conversations yet.<br>Search a TrueLink ID to start chatting.
+        </div>
+    </div>
+</div>
+
+<!-- CHAT AREA -->
+<div class="chat-area flex-1 flex flex-col h-screen">
+    <div class="flex items-center gap-3 px-6 py-4 border-b border-white/5">
+        <div class="aurea-avatar w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs">A</div>
+        <div>
+            <div class="font-semibold text-sm">Aurea</div>
+            <div class="text-[11px] text-white/40 flex items-center gap-1">
+                <span class="pulse-dot"></span> No sugarcoating. Real talk only.
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto chat-scroll px-6 py-5 flex flex-col gap-3" id="chat"></div>
+
+    <div class="flex gap-2 px-6 py-4 border-t border-white/5">
+        <input type="text" id="userInput" placeholder="Ask about a TrueLink ID, or just talk..."
+            class="flex-1 bg-[#1c2340] border border-white/10 rounded-full px-4 py-3 text-sm outline-none focus:border-blue-400">
+        <button onclick="handleSend()" class="bg-blue-500 hover:bg-blue-600 rounded-full px-6 py-3 text-sm font-semibold">Send</button>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
+    const { createClient } = supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    /* ============================================================
+       AUREA ENGINE — same logic as prototype, now wired into the
+       real Messages UI. Swap mockLookupUser() for a real Supabase
+       query against the `Truelink` table when ready.
+    ============================================================ */
+
+    const patternBank = {
+        greeting: {
+            en: ["Hey! Ask me about anyone's trust score, or just talk.", "Hi. I'll give it to you straight — no sugarcoating here."],
+            hi: ["Hey! Kisi ka trust score puchna hai ya bas baat karni hai?", "Namaste. Seedha jawab dungi, ghumaunga nahi."]
+        },
+        trust_score_query: {
+            en: ["{name}'s trust score is {score}/100. Main reasons: {reasons}.", "Looked it up — {name} sits at {score}/100. Here's why: {reasons}."],
+            hi: ["{name} ka trust score {score}/100 hai. Wajah: {reasons}.", "Dekh liya — {name} ka score {score}/100 hai, kyunki {reasons}."]
+        },
+        suspicious_flag: {
+            en: ["Straight up — {name} ({id}) shows some red flags: {reasons}. Be careful before you send anything.", "I won't sugarcoat this — {name} ({id}) looks risky. {reasons}."],
+            hi: ["Seedha bolu — {name} (ID: {id}) mein red flags hai: {reasons}. Kuch bhejne se pehle sochle.", "Sach bataun — {name} ({id}) risky lag raha hai. {reasons}."]
+        },
+        safe_confirm: {
+            en: ["{name} looks solid — {reasons}. No red flags on record.", "Checked — {name} is clean. {reasons}."],
+            hi: ["{name} theek lag raha hai — {reasons}. Koi red flag nahi mila.", "Check kiya — {name} clean hai. {reasons}."]
+        },
+        unknown: {
+            en: ["I don't have data on that yet — ask me about a TrueLink ID or trust score."],
+            hi: ["Iske baare mein abhi data nahi hai — kisi TrueLink ID ya trust score ke baare mein pooch."]
+        }
+    }
+
+    function detectLanguage(text) {
+        const hindiWords = ['hai','kya','kaise','nahi','kar','ka','ke','ki','mujhe','tera','mera','bhai','kaun','kitna']
+        const lower = text.toLowerCase()
+        return hindiWords.filter(w => lower.includes(w)).length >= 1 ? 'hi' : 'en'
+    }
+
+    function detectIntent(text) {
+        const lower = text.toLowerCase()
+        if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) return 'greeting'
+        if (lower.includes('tl-') || lower.includes('score') || lower.includes('trust')) return 'trust_score_query'
+        return 'unknown'
+    }
+
+    // TEMP demo lookup — replace with real Supabase query later:
+    // const { data } = await db.from('Truelink').select('*').eq('truelink_id', id)
+    function mockLookupUser(query) {
+        const demoUsers = {
+            'TL-4635-KP': { name: 'Stark Stark', score: 78, flags: [], reasons_en: 'consistent activity for 3 months, 2 verified positive reviews', reasons_hi: '3 mahine se consistent activity, 2 verified positive reviews' },
+            'TL-1002-RX': { name: 'Rohan', score: 22, flags: ['new_account','multiple_reports'], reasons_en: 'account is 2 days old and already has 3 user reports', reasons_hi: 'account sirf 2 din purana hai aur already 3 reports aa chuke hai' }
+        }
+        const idMatch = query.toUpperCase().match(/TL-\d{4}-[A-Z]{2}/)
+        if (idMatch && demoUsers[idMatch[0]]) return { id: idMatch[0], ...demoUsers[idMatch[0]] }
+        return null
+    }
+
+    function isFlaggedSuspicious(user) { return user.flags && user.flags.length > 0 }
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
+    function fillTemplate(t, vars) { return t.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') }
+
+    function buildResponse(userText) {
+        const lang = detectLanguage(userText)
+        const intent = detectIntent(userText)
+
+        if (intent === 'greeting') return { text: pick(patternBank.greeting[lang]), type: 'ai' }
+
+        if (intent === 'trust_score_query') {
+            const user = mockLookupUser(userText)
+            if (!user) return { text: pick(patternBank.unknown[lang]), type: 'ai' }
+            const reasons = lang === 'hi' ? user.reasons_hi : user.reasons_en
+            if (isFlaggedSuspicious(user)) {
+                return { text: fillTemplate(pick(patternBank.suspicious_flag[lang]), { name: user.name, id: user.id, reasons }), type: 'flag' }
+            } else {
+                return { text: fillTemplate(pick(patternBank.safe_confirm[lang]), { name: user.name, id: user.id, reasons }), type: 'ai' }
+            }
+        }
+        return { text: pick(patternBank.unknown[lang]), type: 'ai' }
+    }
+
+    /* ---- UI WIRING ---- */
+    const chatEl = document.getElementById('chat')
+
+    function addMessage(text, type) {
+        const div = document.createElement('div')
+        div.className = 'msg-bubble ' + type
+        div.textContent = text
+        chatEl.appendChild(div)
+        chatEl.scrollTop = chatEl.scrollHeight
+    }
+
+    function handleSend() {
+        const input = document.getElementById('userInput')
+        const text = input.value.trim()
+        if (!text) return
+        addMessage(text, 'user')
+        input.value = ''
+        setTimeout(() => {
+            const res = buildResponse(text)
+            addMessage(res.text, res.type)
+        }, 400)
+    }
+
+    document.getElementById('userInput').addEventListener('keypress', e => { if (e.key === 'Enter') handleSend() })
+
+    function openAurea() {
+        // future: switch conversation context when more contacts exist
+    }
+
+    // opening message
+    addMessage(pick(patternBank.greeting.en), 'ai')
+</script>
+</body>
+</html>
