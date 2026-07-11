@@ -168,30 +168,51 @@
         return 'unknown'
     }
 
-    // TEMP demo lookup — replace with real Supabase query later:
-    // const { data } = await db.from('Truelink').select('*').eq('truelink_id', id)
-    function mockLookupUser(query) {
-        const demoUsers = {
-            'TL-4635-KP': { name: 'Stark Stark', score: 78, flags: [], reasons_en: 'consistent activity for 3 months, 2 verified positive reviews', reasons_hi: '3 mahine se consistent activity, 2 verified positive reviews' },
-            'TL-1002-RX': { name: 'Rohan', score: 22, flags: ['new_account','multiple_reports'], reasons_en: 'account is 2 days old and already has 3 user reports', reasons_hi: 'account sirf 2 din purana hai aur already 3 reports aa chuke hai' }
-        }
-        const idMatch = query.toUpperCase().match(/TL-\d{4}-[A-Z]{2}/)
-        if (idMatch && demoUsers[idMatch[0]]) return { id: idMatch[0], ...demoUsers[idMatch[0]] }
-        return null
+    async function mockLookupUser(query) {
+    const idMatch = query.toUpperCase().match(/TL-\d{4}-[A-Z]{2}/)
+    if (!idMatch) return null
+
+    const { data, error } = await db
+        .from('Truelink')
+        .select('*')
+        .eq('truelink_id', idMatch[0])
+        .single()
+
+    if (error || !data) return null
+
+    const flags = []
+    if (data.review_count === 0) flags.push('no_reviews_yet')
+    if (data.trust_score < 30) flags.push('low_score')
+
+    const reasons_en = data.review_count > 0
+        ? `${data.review_count} reviews on record, trust score ${data.trust_score}/100`
+        : `no reviews yet, account is new`
+    const reasons_hi = data.review_count > 0
+        ? `${data.review_count} reviews hai, trust score ${data.trust_score}/100`
+        : `abhi tak koi review nahi hai, naya account hai`
+
+    return {
+        id: data.truelink_id,
+        name: `${data.first_name} ${data.last_name}`,
+        score: data.trust_score || 0,
+        flags,
+        reasons_en,
+        reasons_hi
     }
+}
 
     function isFlaggedSuspicious(user) { return user.flags && user.flags.length > 0 }
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
     function fillTemplate(t, vars) { return t.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '') }
 
-    function buildResponse(userText) {
+    async function buildResponse(userText) {
         const lang = detectLanguage(userText)
         const intent = detectIntent(userText)
 
         if (intent === 'greeting') return { text: pick(patternBank.greeting[lang]), type: 'ai' }
 
         if (intent === 'trust_score_query') {
-            const user = mockLookupUser(userText)
+            const user = await mockLookupUser(userText)
             if (!user) return { text: pick(patternBank.unknown[lang]), type: 'ai' }
             const reasons = lang === 'hi' ? user.reasons_hi : user.reasons_en
             if (isFlaggedSuspicious(user)) {
@@ -220,11 +241,10 @@
         if (!text) return
         addMessage(text, 'user')
         input.value = ''
-        setTimeout(() => {
-            const res = buildResponse(text)
+        setTimeout(async () => {
+            const res = await buildResponse(text)
             addMessage(res.text, res.type)
         }, 400)
-    }
 
     document.getElementById('userInput').addEventListener('keypress', e => { if (e.key === 'Enter') handleSend() })
 
