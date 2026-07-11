@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueLink — Community</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { font-family: 'Inter', sans-serif; }
+    body { background: #0b0f1a; min-height: 100vh; }
+    .post-card { background: #12172a; border: 1px solid rgba(255,255,255,0.06); }
+    .post-card:hover { border-color: rgba(255,255,255,0.12); }
+    textarea:focus, input:focus { outline: none; }
+    .scrollbar::-webkit-scrollbar { width: 4px; }
+    .scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+</style>
+</head>
+<body class="text-white">
+
+<!-- NAV -->
+<nav class="flex justify-between items-center px-6 md:px-10 py-5 border-b border-white/5">
+    <div class="flex items-center gap-2">
+        <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+            <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+            <path d="M51 52 L68 65" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+            <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <span class="font-bold text-sm tracking-widest">TRUELINK</span>
+    </div>
+    <div class="flex items-center gap-6 text-sm text-white/60">
+        <a href="index.html" class="hover:text-white">Home</a>
+        <a href="dashboard.html" class="hover:text-white">Dashboard</a>
+        <a href="message.html" class="hover:text-white">Messages</a>
+        <a href="community.html" class="text-white border-b-2 border-blue-400 pb-0.5">Community</a>
+    </div>
+</nav>
+
+<div class="max-w-xl mx-auto px-4 py-8">
+
+    <h1 class="text-xl font-bold mb-1">Community</h1>
+    <p class="text-white/40 text-sm mb-6">Share something. Aurea reads this to learn how TrueLink actually talks.</p>
+
+    <!-- POST BOX -->
+    <div class="post-card rounded-2xl p-4 mb-6">
+        <textarea id="postInput" placeholder="What's on your mind?" rows="3"
+            class="w-full bg-transparent text-sm placeholder-white/30 resize-none"></textarea>
+        <div class="flex justify-between items-center mt-2">
+            <span class="text-xs text-white/30" id="charCount">0/280</span>
+            <button onclick="submitPost()" id="postBtn"
+                class="bg-blue-500 hover:bg-blue-600 rounded-full px-5 py-2 text-xs font-semibold">
+                Post
+            </button>
+        </div>
+    </div>
+
+    <div id="msgBox" class="hidden text-xs px-3 py-2 rounded-lg mb-4 text-center"></div>
+
+    <!-- FEED -->
+    <div id="feed" class="flex flex-col gap-3 scrollbar">
+        <div class="text-center text-white/30 text-sm py-10" id="loadingState">Loading posts...</div>
+    </div>
+
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
+    const { createClient } = supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    let currentUser = null
+
+    window.onload = async function() {
+        const { data: { user } } = await db.auth.getUser()
+        if (!user) {
+            window.location.href = 'index.html'
+            return
+        }
+        currentUser = user
+        loadFeed()
+    }
+
+    document.getElementById('postInput').addEventListener('input', function() {
+        const len = this.value.length
+        document.getElementById('charCount').textContent = len + '/280'
+        if (len > 280) this.value = this.value.slice(0, 280)
+    })
+
+    function showMsg(text, type) {
+        const el = document.getElementById('msgBox')
+        el.textContent = text
+        el.className = type === 'error'
+            ? 'text-xs px-3 py-2 rounded-lg mb-4 text-center bg-red-500/10 text-red-300 border border-red-500/20'
+            : 'text-xs px-3 py-2 rounded-lg mb-4 text-center bg-green-500/10 text-green-300 border border-green-500/20'
+        el.classList.remove('hidden')
+        setTimeout(function() { el.classList.add('hidden') }, 3000)
+    }
+
+    async function submitPost() {
+        const content = document.getElementById('postInput').value.trim()
+        if (!content) { showMsg('Write something first.', 'error'); return }
+        if (!currentUser) { showMsg('Please log in to post.', 'error'); return }
+
+        const btn = document.getElementById('postBtn')
+        btn.disabled = true
+        btn.textContent = 'Posting...'
+
+        const meta = currentUser.user_metadata
+        const authorName = (meta.first_name || '') + ' ' + (meta.last_name || '')
+
+        const { error } = await db.from('posts').insert({
+            user_id: currentUser.id,
+            truelink_id: meta.truelink_id || null,
+            author_name: authorName.trim() || 'TrueLink User',
+            content: content
+        })
+
+        btn.disabled = false
+        btn.textContent = 'Post'
+
+        if (error) {
+            showMsg('Failed to post: ' + error.message, 'error')
+            return
+        }
+
+        document.getElementById('postInput').value = ''
+        document.getElementById('charCount').textContent = '0/280'
+        showMsg('Posted!', 'success')
+        loadFeed()
+    }
+
+    async function loadFeed() {
+        const { data, error } = await db
+            .from('posts')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50)
+
+        const feedEl = document.getElementById('feed')
+
+        if (error) {
+            feedEl.innerHTML = '<div class="text-center text-red-300 text-sm py-10">Could not load posts.</div>'
+            return
+        }
+
+        if (!data || data.length === 0) {
+            feedEl.innerHTML = '<div class="text-center text-white/30 text-sm py-10">No posts yet. Be the first.</div>'
+            return
+        }
+
+        feedEl.innerHTML = data.map(function(post) {
+            const timeAgo = getTimeAgo(post.created_at)
+            return '<div class="post-card rounded-2xl p-4">' +
+                '<div class="flex items-center justify-between mb-2">' +
+                    '<div class="flex items-center gap-2">' +
+                        '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-xs font-bold">' +
+                            (post.author_name ? post.author_name.charAt(0) : 'U') +
+                        '</div>' +
+                        '<div>' +
+                            '<div class="text-sm font-semibold">' + escapeHtml(post.author_name || 'TrueLink User') + '</div>' +
+                            '<div class="text-[10px] text-white/30">' + (post.truelink_id || '') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<span class="text-[10px] text-white/30">' + timeAgo + '</span>' +
+                '</div>' +
+                '<p class="text-sm text-white/85 leading-relaxed">' + escapeHtml(post.content) + '</p>' +
+            '</div>'
+        }).join('')
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div')
+        div.textContent = str
+        return div.innerHTML
+    }
+
+    function getTimeAgo(dateStr) {
+        const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
+        if (diff < 60) return 'just now'
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago'
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago'
+        return Math.floor(diff / 86400) + 'd ago'
+    }
+</script>
+</body>
+</html>
