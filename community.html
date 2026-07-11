@@ -10,56 +10,121 @@
 <style>
     * { font-family: 'Inter', sans-serif; }
     body { background: #0b0f1a; min-height: 100vh; }
-    .post-card { background: #12172a; border: 1px solid rgba(255,255,255,0.06); }
-    .post-card:hover { border-color: rgba(255,255,255,0.12); }
+    .post-card { background: #12172a; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .post-card:hover { background: #141a2e; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.05); }
     textarea:focus, input:focus { outline: none; }
     .scrollbar::-webkit-scrollbar { width: 4px; }
     .scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .icon-btn { color: #4f9dff; transition: background 0.15s; }
+    .icon-btn:hover { background: rgba(79,157,255,0.1); border-radius: 50%; }
+    .avatar-ring {
+        background: linear-gradient(135deg, #4f9dff, #7b5fff);
+    }
 </style>
 </head>
 <body class="text-white">
 
-<!-- NAV -->
-<nav class="flex justify-between items-center px-6 md:px-10 py-5 border-b border-white/5">
-    <div class="flex items-center gap-2">
-        <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
-            <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-            <path d="M51 52 L68 65" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-            <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-        <span class="font-bold text-sm tracking-widest">TRUELINK</span>
-    </div>
-    <div class="flex items-center gap-6 text-sm text-white/60">
-        <a href="index.html" class="hover:text-white">Home</a>
-        <a href="dashboard.html" class="hover:text-white">Dashboard</a>
-        <a href="message.html" class="hover:text-white">Messages</a>
-        <a href="community.html" class="text-white border-b-2 border-blue-400 pb-0.5">Community</a>
-    </div>
-</nav>
+<div class="flex max-w-6xl mx-auto">
 
-<div class="max-w-xl mx-auto px-4 py-8">
+    <!-- LEFT SIDEBAR -->
+    <div class="w-64 shrink-0 h-screen sticky top-0 flex flex-col border-r border-white/5 px-3 py-5 hidden md:flex">
+        <div class="flex items-center gap-2 px-3 mb-8">
+            <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M51 52 L68 65" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span class="font-bold text-sm tracking-widest">TRUELINK</span>
+        </div>
 
-    <h1 class="text-xl font-bold mb-1">Community</h1>
-    <p class="text-white/40 text-sm mb-6">Share something. Aurea reads this to learn how TrueLink actually talks.</p>
+        <nav class="flex flex-col gap-1 text-[15px]">
+            <a href="index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">🏠 Home</a>
+            <a href="dashboard.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">👤 Dashboard</a>
+            <a href="message.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">💬 Messages</a>
+            <a href="community.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full font-bold bg-white/5">🌐 Community</a>
+            <a href="marketplace.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-full">🛒 Marketplace</a>
+        </nav>
 
-    <!-- POST BOX -->
-    <div class="post-card rounded-2xl p-4 mb-6">
-        <textarea id="postInput" placeholder="What's on your mind?" rows="3"
-            class="w-full bg-transparent text-sm placeholder-white/30 resize-none"></textarea>
-        <div class="flex justify-between items-center mt-2">
-            <span class="text-xs text-white/30" id="charCount">0/280</span>
-            <button onclick="submitPost()" id="postBtn"
-                class="bg-blue-500 hover:bg-blue-600 rounded-full px-5 py-2 text-xs font-semibold">
-                Post
-            </button>
+        <button onclick="document.getElementById('postInput').focus()"
+            class="mt-6 bg-blue-500 hover:bg-blue-600 rounded-full py-3 font-bold text-sm">
+            Post
+        </button>
+
+        <div class="mt-auto flex items-center gap-2 px-3 py-3 rounded-full hover:bg-white/5 cursor-pointer" id="sidebarProfile">
+            <div class="avatar-ring w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs" id="sbAvatar">?</div>
+            <div class="min-w-0">
+                <div class="text-sm font-semibold truncate" id="sbName">—</div>
+                <div class="text-xs text-white/40 truncate" id="sbHandle">—</div>
+            </div>
         </div>
     </div>
 
-    <div id="msgBox" class="hidden text-xs px-3 py-2 rounded-lg mb-4 text-center"></div>
+    <!-- CENTER FEED -->
+    <div class="flex-1 max-w-xl border-r border-white/5 min-h-screen">
+        <div class="sticky top-0 bg-[#0b0f1a]/90 backdrop-blur border-b border-white/5 px-5 py-3 z-10">
+            <h1 class="font-bold text-base">Community</h1>
+            <p class="text-white/40 text-xs mt-0.5">Aurea reads this feed to learn how TrueLink actually talks.</p>
+        </div>
 
-    <!-- FEED -->
-    <div id="feed" class="flex flex-col gap-3 scrollbar">
-        <div class="text-center text-white/30 text-sm py-10" id="loadingState">Loading posts...</div>
+        <!-- COMPOSER -->
+        <div class="flex gap-3 px-5 py-4 border-b border-white/5">
+            <div class="avatar-ring w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0" id="composerAvatar">?</div>
+            <div class="flex-1">
+                <textarea id="postInput" placeholder="What's happening?" rows="2"
+                    class="w-full bg-transparent text-[15px] placeholder-white/30 resize-none"></textarea>
+
+                <!-- media preview (future upload support) -->
+                <div id="mediaPreview" class="hidden mb-2 rounded-xl overflow-hidden border border-white/10"></div>
+
+                <div class="flex justify-between items-center mt-2 border-t border-white/5 pt-2">
+                    <div class="flex items-center gap-1">
+                        <button class="icon-btn p-2" onclick="mediaComingSoon('image')" title="Image">🖼️</button>
+                        <button class="icon-btn p-2" onclick="mediaComingSoon('gif')" title="GIF">GIF</button>
+                        <button class="icon-btn p-2" onclick="mediaComingSoon('video')" title="Video">🎥</button>
+                        <button class="icon-btn p-2" onclick="insertEmoji()" title="Emoji">😊</button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-white/30" id="charCount">0/280</span>
+                        <button onclick="submitPost()" id="postBtn"
+                            class="bg-blue-500 hover:bg-blue-600 disabled:opacity-40 rounded-full px-5 py-1.5 text-sm font-bold">
+                            Post
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="msgBox" class="hidden text-xs px-5 py-2 text-center"></div>
+
+        <!-- FEED -->
+        <div id="feed" class="scrollbar">
+            <div class="text-center text-white/30 text-sm py-10" id="loadingState">Loading posts...</div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="w-80 shrink-0 px-5 py-5 hidden lg:block">
+        <div class="bg-[#12172a] border border-white/10 rounded-2xl p-4 mb-4">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="avatar-ring w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs">A</div>
+                <div>
+                    <div class="text-sm font-bold">Aurea</div>
+                    <div class="text-[10px] text-white/40">TrueLink's trust engine</div>
+                </div>
+            </div>
+            <p class="text-xs text-white/50 leading-relaxed">Every post here shapes how Aurea talks. No sugarcoating, just real community language.</p>
+            <a href="message.html" class="block mt-3 text-xs text-blue-400 font-semibold">Chat with Aurea →</a>
+        </div>
+
+        <div class="bg-[#12172a] border border-white/10 rounded-2xl p-4">
+            <div class="text-sm font-bold mb-3">Community guidelines</div>
+            <ul class="text-xs text-white/50 space-y-2 leading-relaxed">
+                <li>• Be real — Aurea learns tone from what's posted here</li>
+                <li>• No personal data of others without consent</li>
+                <li>• Posts are public to all TrueLink members</li>
+            </ul>
+        </div>
     </div>
 
 </div>
@@ -79,6 +144,16 @@
             return
         }
         currentUser = user
+
+        const meta = user.user_metadata
+        const name = ((meta.first_name || '') + ' ' + (meta.last_name || '')).trim() || 'TrueLink User'
+        const initial = name.charAt(0).toUpperCase()
+
+        document.getElementById('sbName').textContent = name
+        document.getElementById('sbHandle').textContent = meta.truelink_id || ''
+        document.getElementById('sbAvatar').textContent = initial
+        document.getElementById('composerAvatar').textContent = initial
+
         loadFeed()
     }
 
@@ -88,12 +163,22 @@
         if (len > 280) this.value = this.value.slice(0, 280)
     })
 
+    function mediaComingSoon(type) {
+        showMsg('Uploading ' + type + ' — coming soon.', 'error')
+    }
+
+    function insertEmoji() {
+        const input = document.getElementById('postInput')
+        input.value += ' 🙂'
+        input.dispatchEvent(new Event('input'))
+    }
+
     function showMsg(text, type) {
         const el = document.getElementById('msgBox')
         el.textContent = text
         el.className = type === 'error'
-            ? 'text-xs px-3 py-2 rounded-lg mb-4 text-center bg-red-500/10 text-red-300 border border-red-500/20'
-            : 'text-xs px-3 py-2 rounded-lg mb-4 text-center bg-green-500/10 text-green-300 border border-green-500/20'
+            ? 'text-xs px-5 py-2 text-center text-red-300'
+            : 'text-xs px-5 py-2 text-center text-green-300'
         el.classList.remove('hidden')
         setTimeout(function() { el.classList.add('hidden') }, 3000)
     }
@@ -108,12 +193,12 @@
         btn.textContent = 'Posting...'
 
         const meta = currentUser.user_metadata
-        const authorName = (meta.first_name || '') + ' ' + (meta.last_name || '')
+        const authorName = ((meta.first_name || '') + ' ' + (meta.last_name || '')).trim() || 'TrueLink User'
 
         const { error } = await db.from('posts').insert({
             user_id: currentUser.id,
             truelink_id: meta.truelink_id || null,
-            author_name: authorName.trim() || 'TrueLink User',
+            author_name: authorName,
             content: content
         })
 
@@ -152,20 +237,22 @@
 
         feedEl.innerHTML = data.map(function(post) {
             const timeAgo = getTimeAgo(post.created_at)
-            return '<div class="post-card rounded-2xl p-4">' +
-                '<div class="flex items-center justify-between mb-2">' +
-                    '<div class="flex items-center gap-2">' +
-                        '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-xs font-bold">' +
-                            (post.author_name ? post.author_name.charAt(0) : 'U') +
-                        '</div>' +
-                        '<div>' +
-                            '<div class="text-sm font-semibold">' + escapeHtml(post.author_name || 'TrueLink User') + '</div>' +
-                            '<div class="text-[10px] text-white/30">' + (post.truelink_id || '') + '</div>' +
-                        '</div>' +
+            const initial = post.author_name ? post.author_name.charAt(0).toUpperCase() : 'U'
+            return '<div class="post-card px-5 py-4 flex gap-3">' +
+                '<div class="avatar-ring w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0">' + initial + '</div>' +
+                '<div class="flex-1 min-w-0">' +
+                    '<div class="flex items-center gap-1.5 text-sm">' +
+                        '<span class="font-bold">' + escapeHtml(post.author_name || 'TrueLink User') + '</span>' +
+                        '<span class="text-white/30 text-xs">' + (post.truelink_id || '') + '</span>' +
+                        '<span class="text-white/30 text-xs">· ' + timeAgo + '</span>' +
                     '</div>' +
-                    '<span class="text-[10px] text-white/30">' + timeAgo + '</span>' +
+                    '<p class="text-[15px] text-white/90 leading-relaxed mt-0.5 mb-2 break-words">' + escapeHtml(post.content) + '</p>' +
+                    '<div class="flex items-center gap-8 text-white/40 text-xs mt-1">' +
+                        '<span class="flex items-center gap-1.5 cursor-pointer hover:text-blue-400">💬 <span>0</span></span>' +
+                        '<span class="flex items-center gap-1.5 cursor-pointer hover:text-red-400">❤️ <span>' + (post.likes || 0) + '</span></span>' +
+                        '<span class="flex items-center gap-1.5 cursor-pointer hover:text-green-400">🔁 <span>0</span></span>' +
+                    '</div>' +
                 '</div>' +
-                '<p class="text-sm text-white/85 leading-relaxed">' + escapeHtml(post.content) + '</p>' +
             '</div>'
         }).join('')
     }
@@ -178,10 +265,10 @@
 
     function getTimeAgo(dateStr) {
         const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
-        if (diff < 60) return 'just now'
-        if (diff < 3600) return Math.floor(diff / 60) + 'm ago'
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago'
-        return Math.floor(diff / 86400) + 'd ago'
+        if (diff < 60) return 'now'
+        if (diff < 3600) return Math.floor(diff / 60) + 'm'
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h'
+        return Math.floor(diff / 86400) + 'd'
     }
 </script>
 </body>
