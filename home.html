@@ -7,143 +7,119 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
     :root {
-        --bg: #F3F4F8;
-        --card: #FFFFFF;
-        --ink: #1A1A2E;
-        --ink-soft: #6B7280;
-        --ink-faint: #A0A4B8;
-        --accent: #6C5CE7;
-        --accent-2: #FF6B9D;
-        --border: #EEEFF3;
+        --bg: #0B0E14;
+        --panel: #12161F;
+        --card: #161B26;
+        --border: rgba(255,255,255,0.07);
+        --ink: rgba(255,255,255,0.92);
+        --ink-soft: rgba(255,255,255,0.55);
+        --ink-faint: rgba(255,255,255,0.32);
+        --accent: #5B8CFF;
+        --accent-2: #A78BFA;
+        --green: #34D399;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
-        background: var(--bg);
+        background: radial-gradient(circle at 20% 0%, #141A29 0%, var(--bg) 45%);
         color: var(--ink);
         min-height: 100vh;
     }
-    a { text-decoration: none; color: inherit; }
-    button { font-family: inherit; border: none; cursor: pointer; background: none; }
+    a { text-decoration:none; color:inherit; }
+    button { font-family:inherit; border:none; cursor:pointer; background:none; color:inherit; }
+    ::placeholder { color: var(--ink-faint); }
 
-    .shell {
-        max-width: 1200px;
-        margin: 24px auto;
-        display: flex;
-        gap: 20px;
-        padding: 0 20px;
-    }
+    .shell { max-width: 1360px; margin: 0 auto; display:flex; gap: 20px; padding: 20px; align-items: flex-start; }
 
     /* ---- LEFT SIDEBAR ---- */
-    .sidebar {
-        width: 260px; flex-shrink: 0;
-        background: var(--card);
-        border-radius: 24px;
-        padding: 28px 20px;
-        height: fit-content;
-    }
-    .profile-top { text-align: center; margin-bottom: 20px; }
-    .profile-avatar {
-        width: 84px; height: 84px; border-radius: 50%;
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        display:flex; align-items:center; justify-content:center;
-        font-size: 30px; font-weight: 700; color: white;
-        margin: 0 auto 12px;
-        border: 3px solid var(--card);
-        box-shadow: 0 0 0 3px var(--border);
-    }
-    .profile-top .name { font-weight: 700; font-size: 16px; }
-    .profile-top .id { font-size: 13px; color: var(--ink-faint); margin-top: 2px; }
+    .sidebar { width: 240px; flex-shrink:0; position: sticky; top: 20px; }
+    .brand { display:flex; align-items:center; gap:10px; padding: 8px 14px 22px; }
+    .brand span { font-weight:700; font-size:15px; letter-spacing:1px; }
 
-    .stats-row { display:flex; justify-content: space-around; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 16px; }
-    .stat { text-align:center; }
-    .stat .num { font-weight: 700; font-size: 15px; }
-    .stat .label { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
-
-    .nav-list { display:flex; flex-direction: column; gap: 4px; }
     .nav-item {
-        display:flex; align-items:center; gap: 12px;
-        padding: 11px 12px; border-radius: 14px;
-        font-size: 14px; font-weight: 500; color: var(--ink-soft);
+        display:flex; align-items:center; gap:14px;
+        padding: 11px 14px; border-radius: 12px;
+        font-size: 15px; color: var(--ink-soft);
+        margin-bottom: 2px;
     }
-    .nav-item:hover { background: var(--bg); }
-    .nav-item.active { background: var(--accent); color: white; font-weight: 600; }
-    .nav-item .ic { width: 20px; text-align:center; }
+    .nav-item:hover { background: var(--panel); color: var(--ink); }
+    .nav-item.active { background: var(--panel); color: var(--ink); font-weight: 600; }
+    .nav-item .ic { width:20px; text-align:center; font-size:16px; }
+    .nav-badge { background: var(--accent); color:white; font-size:10px; font-weight:700; padding: 1px 6px; border-radius: 999px; margin-left:auto; }
 
-    .logout-btn { margin-top: 12px; font-size: 13px; color: var(--ink-faint); padding: 11px 12px; }
-
-    /* ---- MAIN ---- */
-    .main-col { flex: 1; min-width: 0; }
-
-    .top-bar { display:flex; justify-content: space-between; align-items:center; margin-bottom: 24px; }
-    .search-box {
-        background: var(--card); border-radius: 999px; padding: 12px 20px;
-        display:flex; align-items:center; gap: 10px; flex: 1; max-width: 420px;
-        color: var(--ink-faint); font-size: 14px;
-    }
-    .search-box input { border:none; outline:none; background:transparent; flex:1; font-size:14px; font-family:inherit; color: var(--ink); }
     .create-post-btn {
+        width:100%; margin-top: 14px;
         background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        color: white; font-weight: 600; font-size: 14px;
-        padding: 12px 22px; border-radius: 999px;
+        color:white; font-weight:700; font-size:14px;
+        padding: 12px; border-radius: 999px;
     }
 
-    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+    .mini-profile { background: var(--panel); border:1px solid var(--border); border-radius: 16px; padding: 14px; margin-top: 18px; }
+    .mini-profile-top { display:flex; align-items:center; gap:10px; margin-bottom: 12px; }
+    .avatar { width:38px; height:38px; border-radius:50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+    .mini-profile-top .name { font-size:13.5px; font-weight:600; }
+    .mini-profile-top .handle { font-size:11.5px; color: var(--ink-faint); }
+    .trust-mini-label { font-size:11px; color: var(--ink-faint); margin-bottom: 2px; }
+    .trust-mini-score { font-size:26px; font-weight:800; display:flex; align-items:baseline; gap:8px; }
+    .trust-mini-score .tag { font-size:11px; color: var(--green); font-weight:600; }
 
-    /* ---- STORIES / TRUSTED MEMBERS ROW ---- */
-    .stories-row { display:flex; gap: 18px; overflow-x:auto; padding-bottom: 8px; margin-bottom: 30px; }
-    .story {
-        flex-shrink: 0; display:flex; flex-direction: column; align-items:center; gap: 8px; cursor: pointer;
-        width: 84px;
-    }
-    .story-ring {
-        width: 76px; height: 76px; border-radius: 50%;
-        padding: 3px;
-        background: conic-gradient(from 180deg, var(--accent-2), var(--accent), var(--accent-2));
-        display:flex; align-items:center; justify-content:center;
-    }
-    .story-ring.seen { background: var(--border); }
-    .story-avatar {
-        width: 100%; height: 100%; border-radius: 50%;
-        background: var(--card);
-        display:flex; align-items:center; justify-content:center;
-        font-weight: 700; font-size: 22px; color: var(--accent);
-        border: 3px solid var(--card);
-    }
-    .story .story-name { font-size: 12px; color: var(--ink-soft); text-align:center; max-width: 80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* ---- MAIN FEED ---- */
+    .feed-col { width: 600px; flex-shrink:0; }
 
-    /* ---- FEED GRID ---- */
-    .feed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+    .top-search { display:flex; align-items:center; gap:12px; margin-bottom: 16px; }
+    .search-box { flex:1; background: var(--panel); border:1px solid var(--border); border-radius: 999px; padding: 11px 16px; display:flex; align-items:center; gap:10px; color: var(--ink-faint); font-size:14px; }
+    .search-box input { flex:1; background:transparent; border:none; outline:none; color:var(--ink); font-size:14px; font-family:inherit; }
+    .icon-btn { width:38px; height:38px; border-radius:50%; background: var(--panel); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
 
-    .post-card { background: var(--card); border-radius: 20px; overflow:hidden; }
-    .post-card-head { display:flex; align-items:center; gap: 10px; padding: 14px 16px; }
-    .post-card-avatar {
-        width: 36px; height: 36px; border-radius: 50%;
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        display:flex; align-items:center; justify-content:center;
-        font-weight: 700; font-size: 14px; color: white;
-    }
-    .post-card-head .who { font-weight: 600; font-size: 13.5px; }
-    .post-card-head .time { font-size: 11px; color: var(--ink-faint); }
+    .tabs { display:flex; gap: 22px; border-bottom: 1px solid var(--border); padding: 0 4px 12px; margin-bottom: 16px; overflow-x:auto; }
+    .tab { font-size:14px; color: var(--ink-faint); font-weight:600; white-space:nowrap; padding-bottom: 4px; }
+    .tab.active { color: var(--ink); border-bottom: 2px solid var(--accent); }
 
-    .post-card-body { padding: 0 16px 16px; }
-    .post-card-body p { font-size: 14px; line-height: 1.5; color: var(--ink); }
+    .composer { background: var(--panel); border:1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 18px; }
+    .composer-top { display:flex; gap:12px; }
+    .composer textarea { flex:1; background:transparent; border:none; outline:none; color:var(--ink); font-size:15px; font-family:inherit; resize:none; padding-top:8px; }
+    .composer-actions { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+    .media-icons { display:flex; gap:4px; }
+    .media-icons button { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:15px; }
+    .media-icons button:hover { background: rgba(91,140,255,0.12); }
+    .char-count { font-size:11px; color: var(--ink-faint); margin-right:12px; }
+    .post-submit-btn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:white; font-size:13px; font-weight:700; padding:8px 18px; border-radius:999px; }
+    .post-submit-btn:disabled { opacity:0.4; }
 
-    .post-card-visual {
-        height: 160px;
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        display:flex; align-items:center; justify-content:center;
-        color: rgba(255,255,255,0.5); font-size: 12px;
-    }
+    .status-msg { font-size:12px; text-align:center; padding: 6px 0 14px; display:none; }
+    .status-msg.error { color: #FF6B6B; }
+    .status-msg.success { color: var(--green); }
 
-    .post-card-actions { display:flex; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); }
-    .post-card-actions button { font-size: 12px; color: var(--ink-soft); display:flex; align-items:center; gap: 5px; }
+    .post-card { background: var(--panel); border:1px solid var(--border); border-radius: 18px; padding:16px; margin-bottom: 14px; }
+    .post-head { display:flex; gap:12px; }
+    .post-meta { display:flex; align-items:baseline; gap:6px; font-size:14px; flex-wrap:wrap; }
+    .post-meta .pname { font-weight:700; }
+    .post-meta .phandle, .post-meta .ptime { color: var(--ink-faint); font-size:13px; }
+    .post-text { font-size:14.5px; line-height:1.5; margin-top:4px; color: var(--ink); word-wrap:break-word; }
+    .post-actions { display:flex; gap:36px; margin-top:12px; }
+    .post-actions button { display:flex; align-items:center; gap:6px; font-size:12.5px; color: var(--ink-faint); }
+    .post-actions button:hover { color: var(--accent); }
 
-    .empty-state { text-align:center; padding: 60px 20px; color: var(--ink-faint); font-size: 14px; grid-column: 1 / -1; }
+    .empty-state { text-align:center; padding: 50px 20px; color: var(--ink-faint); font-size:14px; }
 
-    @media (max-width: 800px) {
-        .sidebar { display: none; }
-    }
+    /* ---- RIGHT PANEL ---- */
+    .right-col { width: 320px; flex-shrink:0; display:flex; flex-direction:column; gap:16px; position: sticky; top:20px; }
+    @media (max-width: 1180px) { .right-col { display:none; } }
+    @media (max-width: 860px) { .sidebar { display:none; } }
+
+    .r-card { background: var(--panel); border:1px solid var(--border); border-radius: 18px; padding:18px; }
+    .r-card.premium { background: linear-gradient(135deg, rgba(91,140,255,0.15), rgba(167,139,250,0.1)); }
+    .r-card .title { font-size:15px; font-weight:700; margin-bottom:8px; }
+    .r-card p { font-size:12.5px; color: var(--ink-soft); line-height:1.5; }
+    .r-btn { margin-top:12px; display:inline-block; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:white; font-size:12.5px; font-weight:700; padding:9px 18px; border-radius:999px; }
+
+    .widget-score { font-size: 34px; font-weight:800; display:flex; align-items:baseline; gap:8px; margin: 6px 0; }
+    .widget-score .tag { font-size:12px; color: var(--green); font-weight:600; }
+
+    .r-list-item { padding: 8px 0; border-top: 1px solid var(--border); }
+    .r-list-item:first-child { border-top:none; }
+    .r-list-item .k { font-size:11px; color: var(--ink-faint); }
+    .r-list-item .v { font-size:13.5px; font-weight:600; margin-top:2px; }
 </style>
 </head>
 <body>
@@ -152,47 +128,101 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="profile-top">
-            <div class="profile-avatar" id="pfAvatar">?</div>
-            <div class="name" id="pfName">—</div>
-            <div class="id" id="pfId">—</div>
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 100 100" fill="none">
+                <path d="M25 20 L25 45 Q25 58 38 58 Q51 58 51 45 L51 38" stroke="white" stroke-width="11" stroke-linecap="round" fill="none"/>
+                <path d="M51 52 L68 65" stroke="white" stroke-width="11" stroke-linecap="round" fill="none"/>
+                <path d="M62 58 L85 58 L70 82 L48 82" stroke="white" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <span>TRUELINK</span>
         </div>
 
-        <div class="stats-row">
-            <div class="stat"><div class="num" id="statScore">0</div><div class="label">Score</div></div>
-            <div class="stat"><div class="num" id="statReviews">0</div><div class="label">Reviews</div></div>
-            <div class="stat"><div class="num" id="statPosts">0</div><div class="label">Posts</div></div>
+        <a href="home.html" class="nav-item active"><span class="ic">⌂</span> Home</a>
+        <a href="community.html" class="nav-item"><span class="ic">◈</span> Explore</a>
+        <a href="#" class="nav-item"><span class="ic">🔔</span> Notifications</a>
+        <a href="message.html" class="nav-item"><span class="ic">✉</span> Messages</a>
+        <a href="dashboard.html" class="nav-item"><span class="ic">◉</span> Trust Score</a>
+        <a href="marketplace.html" class="nav-item"><span class="ic">▦</span> Marketplace</a>
+        <a href="review.html" class="nav-item"><span class="ic">★</span> Reviews</a>
+        <a href="dashboard.html" class="nav-item"><span class="ic">⚙</span> Settings</a>
+
+        <button class="create-post-btn" onclick="document.getElementById('postInput').focus()">+ Create Post</button>
+
+        <div class="mini-profile" id="miniProfile">
+            <div class="mini-profile-top">
+                <div class="avatar" id="mpAvatar">?</div>
+                <div>
+                    <div class="name" id="mpName">—</div>
+                    <div class="handle" id="mpHandle">—</div>
+                </div>
+            </div>
+            <div class="trust-mini-label">Trust Score</div>
+            <div class="trust-mini-score"><span id="mpScore">0</span><span class="tag" id="mpTag">New</span></div>
         </div>
-
-        <nav class="nav-list">
-            <a href="index.html" class="nav-item active"><span class="ic">⌂</span> Home</a>
-            <a href="dashboard.html" class="nav-item"><span class="ic">◉</span> Profile</a>
-            <a href="community.html" class="nav-item"><span class="ic">◈</span> Community</a>
-            <a href="message.html" class="nav-item"><span class="ic">✉</span> Messages</a>
-            <a href="marketplace.html" class="nav-item"><span class="ic">▦</span> Marketplace</a>
-            <a href="review.html" class="nav-item"><span class="ic">★</span> Reviews</a>
-        </nav>
-
-        <button class="logout-btn" onclick="logout()">↩ Log out</button>
     </aside>
 
-    <!-- MAIN -->
-    <main class="main-col">
-        <div class="top-bar">
-            <div class="search-box">🔍 <input type="text" placeholder="Search a TrueLink ID..." id="searchInput"></div>
-            <button class="create-post-btn" onclick="window.location.href='community.html'">+ Create a post</button>
+    <!-- FEED -->
+    <main class="feed-col">
+        <div class="top-search">
+            <div class="search-box">🔍 <input type="text" id="searchInput" placeholder="Search a TrueLink ID..."></div>
+            <button class="icon-btn" onclick="window.location.href='message.html'">✉</button>
         </div>
 
-        <h2 class="section-title">Recently trusted</h2>
-        <div class="stories-row" id="storiesRow">
-            <div class="empty-state" style="padding:10px;">No members yet — you're first.</div>
+        <div class="tabs">
+            <span class="tab active">For you</span>
+            <span class="tab">Following</span>
+            <span class="tab">Trusted</span>
+            <span class="tab">Tech</span>
+            <span class="tab">Business</span>
         </div>
 
-        <h2 class="section-title">Feed</h2>
-        <div class="feed-grid" id="feedGrid">
-            <div class="empty-state">Loading...</div>
+        <div class="composer">
+            <div class="composer-top">
+                <div class="avatar" id="composerAvatar">?</div>
+                <textarea id="postInput" placeholder="What's on your mind?" rows="2"></textarea>
+            </div>
+            <div class="composer-actions">
+                <div class="media-icons">
+                    <button onclick="mediaComingSoon('image')" title="Image">🖼</button>
+                    <button onclick="mediaComingSoon('gif')" title="GIF">GIF</button>
+                    <button onclick="mediaComingSoon('video')" title="Video">▶</button>
+                    <button onclick="insertEmoji()" title="Emoji">☺</button>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span class="char-count" id="charCount">0/280</span>
+                    <button class="post-submit-btn" id="postBtn" onclick="submitPost()">Post</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-msg" id="msgBox"></div>
+
+        <div id="feed">
+            <div class="empty-state" id="loadingState">Loading posts…</div>
         </div>
     </main>
+
+    <!-- RIGHT PANEL -->
+    <aside class="right-col">
+        <div class="r-card premium">
+            <div class="title">Ask Aurea</div>
+            <p>TrueLink's trust engine. Check anyone's score, no sugarcoating.</p>
+            <a href="message.html" class="r-btn">Chat now</a>
+        </div>
+
+        <div class="r-card">
+            <div class="title">Your Trust Widget</div>
+            <div class="widget-score"><span id="widgetScore">0</span><span class="tag" id="widgetTag">New Member</span></div>
+            <p>Score updates as you get verified reviews.</p>
+        </div>
+
+        <div class="r-card">
+            <div class="title">Community guidelines</div>
+            <div class="r-list-item"><div class="v">Be real</div><div class="k">Aurea learns tone from what's posted here</div></div>
+            <div class="r-list-item"><div class="v">Respect privacy</div><div class="k">No personal data of others without consent</div></div>
+            <div class="r-list-item"><div class="v">Public feed</div><div class="k">Posts are visible to all TrueLink members</div></div>
+        </div>
+    </aside>
 
 </div>
 
@@ -202,63 +232,126 @@
     const { createClient } = supabase
     const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
+    let currentUser = null
+
     window.onload = async function() {
         const { data: { user } } = await db.auth.getUser()
         if (!user) { window.location.href = 'index.html'; return }
+        currentUser = user
 
         const meta = user.user_metadata
         const name = ((meta.first_name || '') + ' ' + (meta.last_name || '')).trim() || 'TrueLink User'
         const initial = name.charAt(0).toUpperCase()
 
-        document.getElementById('pfAvatar').textContent = initial
-        document.getElementById('pfName').textContent = name
-        document.getElementById('pfId').textContent = meta.truelink_id || ''
+        document.getElementById('mpAvatar').textContent = initial
+        document.getElementById('mpName').textContent = name
+        document.getElementById('mpHandle').textContent = meta.truelink_id || ''
+        document.getElementById('composerAvatar').textContent = initial
 
         const { data: row } = await db.from('Truelink').select('*').eq('truelink_id', meta.truelink_id).single()
         if (row) {
-            document.getElementById('statScore').textContent = row.trust_score || 0
-            document.getElementById('statReviews').textContent = row.review_count || 0
+            const score = row.trust_score || 0
+            document.getElementById('mpScore').textContent = score
+            document.getElementById('widgetScore').textContent = score
+            const tag = score === 0 ? 'New' : score < 40 ? 'Building' : score < 75 ? 'Trusted' : 'Excellent'
+            document.getElementById('mpTag').textContent = tag
+            document.getElementById('widgetTag').textContent = tag === 'New' ? 'New Member' : tag
         }
 
-        loadStories()
         loadFeed()
     }
 
-    async function loadStories() {
-        const { data } = await db.from('Truelink').select('first_name,last_name,truelink_id').limit(10)
-        const row = document.getElementById('storiesRow')
-        if (!data || data.length === 0) return
+    document.getElementById('postInput').addEventListener('input', function() {
+        const len = this.value.length
+        document.getElementById('charCount').textContent = len + '/280'
+        if (len > 280) this.value = this.value.slice(0, 280)
+    })
 
-        row.innerHTML = data.map(function(u) {
-            const name = (u.first_name || 'User')
-            const initial = name.charAt(0).toUpperCase()
-            return '<div class="story">' +
-                '<div class="story-ring"><div class="story-avatar">' + initial + '</div></div>' +
-                '<div class="story-name">' + escapeHtml(name) + '</div>' +
-            '</div>'
-        }).join('')
+    function mediaComingSoon(type) { showMsg('Uploading ' + type + ' — coming soon.', 'error') }
+    function insertEmoji() {
+        const input = document.getElementById('postInput')
+        input.value += ' 🙂'
+        input.dispatchEvent(new Event('input'))
+    }
+
+    function showMsg(text, type) {
+        const el = document.getElementById('msgBox')
+        el.textContent = text
+        el.className = 'status-msg ' + type
+        el.style.display = 'block'
+        setTimeout(function() { el.style.display = 'none' }, 3000)
+    }
+
+    async function submitPost() {
+        const content = document.getElementById('postInput').value.trim()
+        if (!content) { showMsg('Write something first.', 'error'); return }
+        if (!currentUser) { showMsg('Please log in to post.', 'error'); return }
+
+        const btn = document.getElementById('postBtn')
+        btn.disabled = true
+        btn.textContent = 'Posting…'
+
+        const meta = currentUser.user_metadata
+        const authorName = ((meta.first_name || '') + ' ' + (meta.last_name || '')).trim() || 'TrueLink User'
+
+        const { error } = await db.from('posts').insert({
+            user_id: currentUser.id,
+            truelink_id: meta.truelink_id || null,
+            author_name: authorName,
+            content: content
+        })
+
+        btn.disabled = false
+        btn.textContent = 'Post'
+
+        if (error) { showMsg('Failed to post: ' + error.message, 'error'); return }
+
+        classifyAndLearn(content)
+
+        document.getElementById('postInput').value = ''
+        document.getElementById('charCount').textContent = '0/280'
+        showMsg('Posted!', 'success')
+        loadFeed()
+    }
+
+    function classifyAndLearn(content) {
+        const lower = content.toLowerCase()
+        const hindiWords = ['hai','kya','kaise','nahi','kar','ka','ke','ki','mujhe','tera','mera','bhai']
+        const lang = hindiWords.filter(w => lower.includes(w)).length >= 1 ? 'hi' : 'en'
+        let tag = 'casual'
+        if (/(good|great|solid|trust|helpful|badhiya|achha|shandar)/.test(lower)) tag = 'praise'
+        if (/(careful|scam|fraud|fake|red flag|risky|dhyan|dhoka)/.test(lower)) tag = 'warning'
+        if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) tag = 'greeting'
+        db.from('learned_patterns').insert({ content: content, tag: tag, language: lang, source_post_id: null })
     }
 
     async function loadFeed() {
-        const { data } = await db.from('posts').select('*').order('created_at', { ascending: false }).limit(20)
-        const grid = document.getElementById('feedGrid')
-        document.getElementById('statPosts').textContent = data ? data.length : 0
+        const { data, error } = await db.from('posts').select('*').order('created_at', { ascending: false }).limit(50)
+        const feedEl = document.getElementById('feed')
 
-        if (!data || data.length === 0) {
-            grid.innerHTML = '<div class="empty-state">No posts yet. Head to Community to post something.</div>'
-            return
-        }
+        if (error) { feedEl.innerHTML = '<div class="empty-state">Could not load posts.</div>'; return }
+        if (!data || data.length === 0) { feedEl.innerHTML = '<div class="empty-state">No posts yet. Be the first to share something.</div>'; return }
 
-        grid.innerHTML = data.map(function(post) {
-            const initial = post.author_name ? post.author_name.charAt(0).toUpperCase() : 'U'
+        feedEl.innerHTML = data.map(function(post) {
             const timeAgo = getTimeAgo(post.created_at)
+            const initial = post.author_name ? post.author_name.charAt(0).toUpperCase() : 'U'
             return '<div class="post-card">' +
-                '<div class="post-card-head">' +
-                    '<div class="post-card-avatar">' + initial + '</div>' +
-                    '<div><div class="who">' + escapeHtml(post.author_name || 'TrueLink User') + '</div><div class="time">' + timeAgo + '</div></div>' +
+                '<div class="post-head">' +
+                    '<div class="avatar">' + initial + '</div>' +
+                    '<div style="flex:1; min-width:0;">' +
+                        '<div class="post-meta">' +
+                            '<span class="pname">' + escapeHtml(post.author_name || 'TrueLink User') + '</span>' +
+                            '<span class="phandle">' + (post.truelink_id || '') + '</span>' +
+                            '<span class="ptime">· ' + timeAgo + '</span>' +
+                        '</div>' +
+                        '<div class="post-text">' + escapeHtml(post.content) + '</div>' +
+                        '<div class="post-actions">' +
+                            '<button>💬 <span>0</span></button>' +
+                            '<button>🔁 <span>0</span></button>' +
+                            '<button>♡ <span>' + (post.likes || 0) + '</span></button>' +
+                        '</div>' +
+                    '</div>' +
                 '</div>' +
-                '<div class="post-card-body"><p>' + escapeHtml(post.content) + '</p></div>' +
-                '<div class="post-card-actions"><button>♡ Like</button><button>💬 Comment</button><button>↗ Share</button></div>' +
             '</div>'
         }).join('')
     }
@@ -272,9 +365,9 @@
     function getTimeAgo(dateStr) {
         const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000)
         if (diff < 60) return 'now'
-        if (diff < 3600) return Math.floor(diff / 60) + 'm ago'
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago'
-        return Math.floor(diff / 86400) + 'd ago'
+        if (diff < 3600) return Math.floor(diff / 60) + 'm'
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h'
+        return Math.floor(diff / 86400) + 'd'
     }
 
     document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -283,11 +376,6 @@
             if (id) window.location.href = 'profile.html?id=' + id
         }
     })
-
-    async function logout() {
-        await db.auth.signOut()
-        window.location.href = 'index.html'
-    }
 </script>
 </body>
 </html>
