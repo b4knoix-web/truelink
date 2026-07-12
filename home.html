@@ -8,15 +8,16 @@
 <style>
     :root {
         --bg: #0B0E14;
-        --panel: #12161F;
-        --card: #161B26;
-        --border: rgba(255,255,255,0.07);
-        --ink: rgba(255,255,255,0.92);
+        --panel: #12151C;
+        --card: #171B24;
+        --border: rgba(255,255,255,0.06);
+        --ink: rgba(255,255,255,0.95);
         --ink-soft: rgba(255,255,255,0.55);
-        --ink-faint: rgba(255,255,255,0.32);
-        --accent: #5B8CFF;
+        --ink-faint: rgba(255,255,255,0.3);
+        --accent-1: #5B8CFF;
         --accent-2: #A78BFA;
         --green: #34D399;
+        --cyan: #22D3EE;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -31,39 +32,62 @@
 
     .shell { max-width: 1360px; margin: 0 auto; display:flex; gap: 20px; padding: 20px; align-items: flex-start; }
 
-    /* ---- LEFT SIDEBAR ---- */
+    /* ================= SIDEBAR (precise-matched) ================= */
     .sidebar { width: 240px; flex-shrink:0; position: sticky; top: 20px; }
-    .brand { display:flex; align-items:center; gap:10px; padding: 8px 14px 22px; }
+    .brand { display:flex; align-items:center; gap:10px; padding: 8px 14px 20px; }
     .brand span { font-weight:700; font-size:15px; letter-spacing:1px; }
 
+    .nav-list { display:flex; flex-direction:column; }
     .nav-item {
-        display:flex; align-items:center; gap:14px;
+        display:flex; align-items:center; gap:13px;
         padding: 11px 14px; border-radius: 12px;
-        font-size: 15px; color: var(--ink-soft);
-        margin-bottom: 2px;
+        font-size: 15px; color: var(--ink-soft); font-weight: 500;
     }
-    .nav-item:hover { background: var(--panel); color: var(--ink); }
-    .nav-item.active { background: var(--panel); color: var(--ink); font-weight: 600; }
-    .nav-item .ic { width:20px; text-align:center; font-size:16px; }
-    .nav-badge { background: var(--accent); color:white; font-size:10px; font-weight:700; padding: 1px 6px; border-radius: 999px; margin-left:auto; }
+    .nav-item:hover { background: rgba(255,255,255,0.03); }
+    .nav-item.active { background: var(--card); color: var(--ink); font-weight: 700; }
+    .nav-item svg { width:19px; height:19px; flex-shrink:0; stroke: currentColor; fill:none; stroke-width:1.8; }
+    .nav-item.active svg { stroke-width: 2; }
 
-    .create-post-btn {
-        width:100%; margin-top: 14px;
-        background: linear-gradient(135deg, var(--accent), var(--accent-2));
-        color:white; font-weight:700; font-size:14px;
-        padding: 12px; border-radius: 999px;
+    .badge {
+        margin-left:auto;
+        background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        color:white; font-size:11px; font-weight:700;
+        padding: 2px 8px; border-radius: 999px;
+        min-width: 20px; text-align:center;
     }
 
-    .mini-profile { background: var(--panel); border:1px solid var(--border); border-radius: 16px; padding: 14px; margin-top: 18px; }
-    .mini-profile-top { display:flex; align-items:center; gap:10px; margin-bottom: 12px; }
-    .avatar { width:38px; height:38px; border-radius:50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
-    .mini-profile-top .name { font-size:13.5px; font-weight:600; }
-    .mini-profile-top .handle { font-size:11.5px; color: var(--ink-faint); }
-    .trust-mini-label { font-size:11px; color: var(--ink-faint); margin-bottom: 2px; }
-    .trust-mini-score { font-size:26px; font-weight:800; display:flex; align-items:baseline; gap:8px; }
-    .trust-mini-score .tag { font-size:11px; color: var(--green); font-weight:600; }
+    .create-btn {
+        width:100%; margin-top: 16px;
+        background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        color:white; font-weight:700; font-size:14.5px;
+        padding: 13px; border-radius: 999px;
+        display:flex; align-items:center; justify-content:center; gap:8px;
+    }
 
-    /* ---- MAIN FEED ---- */
+    .profile-card {
+        background: var(--card); border:1px solid var(--border);
+        border-radius: 18px; padding: 16px; margin-top: 18px;
+    }
+    .pc-top { display:flex; align-items:center; gap:10px; margin-bottom: 14px; }
+    .pc-avatar {
+        width:38px; height:38px; border-radius:50%;
+        background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        display:flex; align-items:center; justify-content:center;
+        font-weight:700; font-size:14px; flex-shrink:0;
+    }
+    .pc-name { font-size:14px; font-weight:700; }
+    .pc-handle { font-size:12px; color: var(--ink-faint); margin-top:1px; }
+    .pc-menu { margin-left:auto; color: var(--ink-faint); font-size:16px; }
+
+    .pc-label { font-size:11px; color: var(--ink-faint); text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px; }
+    .pc-score-row { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+    .pc-score { font-size:27px; font-weight:800; }
+    .pc-verified-icon { width:16px; height:16px; }
+    .pc-verified-text { font-size:12px; color: var(--green); font-weight:600; margin-bottom:10px; }
+
+    .sparkline { width:100%; height:36px; display:block; }
+
+    /* ================= MAIN FEED ================= */
     .feed-col { width: 600px; flex-shrink:0; }
 
     .top-search { display:flex; align-items:center; gap:12px; margin-bottom: 16px; }
@@ -73,17 +97,17 @@
 
     .tabs { display:flex; gap: 22px; border-bottom: 1px solid var(--border); padding: 0 4px 12px; margin-bottom: 16px; overflow-x:auto; }
     .tab { font-size:14px; color: var(--ink-faint); font-weight:600; white-space:nowrap; padding-bottom: 4px; }
-    .tab.active { color: var(--ink); border-bottom: 2px solid var(--accent); }
+    .tab.active { color: var(--ink); border-bottom: 2px solid var(--accent-1); }
 
     .composer { background: var(--panel); border:1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 18px; }
     .composer-top { display:flex; gap:12px; }
     .composer textarea { flex:1; background:transparent; border:none; outline:none; color:var(--ink); font-size:15px; font-family:inherit; resize:none; padding-top:8px; }
     .composer-actions { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
     .media-icons { display:flex; gap:4px; }
-    .media-icons button { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--accent); font-size:15px; }
+    .media-icons button { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--accent-1); font-size:15px; }
     .media-icons button:hover { background: rgba(91,140,255,0.12); }
     .char-count { font-size:11px; color: var(--ink-faint); margin-right:12px; }
-    .post-submit-btn { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:white; font-size:13px; font-weight:700; padding:8px 18px; border-radius:999px; }
+    .post-submit-btn { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color:white; font-size:13px; font-weight:700; padding:8px 18px; border-radius:999px; }
     .post-submit-btn:disabled { opacity:0.4; }
 
     .status-msg { font-size:12px; text-align:center; padding: 6px 0 14px; display:none; }
@@ -92,17 +116,18 @@
 
     .post-card { background: var(--panel); border:1px solid var(--border); border-radius: 18px; padding:16px; margin-bottom: 14px; }
     .post-head { display:flex; gap:12px; }
+    .avatar { width:38px; height:38px; border-radius:50%; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
     .post-meta { display:flex; align-items:baseline; gap:6px; font-size:14px; flex-wrap:wrap; }
     .post-meta .pname { font-weight:700; }
     .post-meta .phandle, .post-meta .ptime { color: var(--ink-faint); font-size:13px; }
     .post-text { font-size:14.5px; line-height:1.5; margin-top:4px; color: var(--ink); word-wrap:break-word; }
     .post-actions { display:flex; gap:36px; margin-top:12px; }
     .post-actions button { display:flex; align-items:center; gap:6px; font-size:12.5px; color: var(--ink-faint); }
-    .post-actions button:hover { color: var(--accent); }
+    .post-actions button:hover { color: var(--accent-1); }
 
     .empty-state { text-align:center; padding: 50px 20px; color: var(--ink-faint); font-size:14px; }
 
-    /* ---- RIGHT PANEL ---- */
+    /* ================= RIGHT PANEL ================= */
     .right-col { width: 320px; flex-shrink:0; display:flex; flex-direction:column; gap:16px; position: sticky; top:20px; }
     @media (max-width: 1180px) { .right-col { display:none; } }
     @media (max-width: 860px) { .sidebar { display:none; } }
@@ -111,7 +136,7 @@
     .r-card.premium { background: linear-gradient(135deg, rgba(91,140,255,0.15), rgba(167,139,250,0.1)); }
     .r-card .title { font-size:15px; font-weight:700; margin-bottom:8px; }
     .r-card p { font-size:12.5px; color: var(--ink-soft); line-height:1.5; }
-    .r-btn { margin-top:12px; display:inline-block; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color:white; font-size:12.5px; font-weight:700; padding:9px 18px; border-radius:999px; }
+    .r-btn { margin-top:12px; display:inline-block; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color:white; font-size:12.5px; font-weight:700; padding:9px 18px; border-radius:999px; }
 
     .widget-score { font-size: 34px; font-weight:800; display:flex; align-items:baseline; gap:8px; margin: 6px 0; }
     .widget-score .tag { font-size:12px; color: var(--green); font-weight:600; }
@@ -137,27 +162,69 @@
             <span>TRUELINK</span>
         </div>
 
-        <a href="home.html" class="nav-item active"><span class="ic">⌂</span> Home</a>
-        <a href="community.html" class="nav-item"><span class="ic">◈</span> Explore</a>
-        <a href="#" class="nav-item"><span class="ic">🔔</span> Notifications</a>
-        <a href="message.html" class="nav-item"><span class="ic">✉</span> Messages</a>
-        <a href="dashboard.html" class="nav-item"><span class="ic">◉</span> Trust Score</a>
-        <a href="marketplace.html" class="nav-item"><span class="ic">▦</span> Marketplace</a>
-        <a href="review.html" class="nav-item"><span class="ic">★</span> Reviews</a>
-        <a href="dashboard.html" class="nav-item"><span class="ic">⚙</span> Settings</a>
+        <nav class="nav-list">
+            <a href="home.html" class="nav-item active">
+                <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+                Home
+            </a>
+            <a href="community.html" class="nav-item">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                Explore
+            </a>
+            <a href="#" class="nav-item">
+                <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                Notifications
+                <span class="badge" id="notifBadge">0</span>
+            </a>
+            <a href="message.html" class="nav-item">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg>
+                Messages
+            </a>
+            <a href="dashboard.html" class="nav-item">
+                <svg viewBox="0 0 24 24"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>
+                Trust Score
+            </a>
+            <a href="marketplace.html" class="nav-item">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Marketplace
+            </a>
+            <a href="review.html" class="nav-item">
+                <svg viewBox="0 0 24 24"><path d="M12 17.3L5.8 21l1.6-7L2 9.3l7.1-.6L12 2l2.9 6.7 7.1.6-5.4 4.7 1.6 7z"/></svg>
+                Reviews
+            </a>
+            <a href="dashboard.html" class="nav-item">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </nav>
 
-        <button class="create-post-btn" onclick="document.getElementById('postInput').focus()">+ Create Post</button>
+        <button class="create-btn" onclick="document.getElementById('postInput').focus()">+ Create Post</button>
 
-        <div class="mini-profile" id="miniProfile">
-            <div class="mini-profile-top">
-                <div class="avatar" id="mpAvatar">?</div>
+        <div class="profile-card">
+            <div class="pc-top">
+                <div class="pc-avatar" id="mpAvatar">?</div>
                 <div>
-                    <div class="name" id="mpName">—</div>
-                    <div class="handle" id="mpHandle">—</div>
+                    <div class="pc-name" id="mpName">—</div>
+                    <div class="pc-handle" id="mpHandle">—</div>
                 </div>
+                <div class="pc-menu">⋯</div>
             </div>
-            <div class="trust-mini-label">Trust Score</div>
-            <div class="trust-mini-score"><span id="mpScore">0</span><span class="tag" id="mpTag">New</span></div>
+
+            <div class="pc-label">Trust Score</div>
+            <div class="pc-score-row">
+                <span class="pc-score" id="mpScore">0</span>
+                <svg class="pc-verified-icon" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M8.5 12.5l2.5 2.5 4.5-5"/>
+                </svg>
+            </div>
+            <div class="pc-verified-text" id="mpTag">New</div>
+
+            <svg class="sparkline" viewBox="0 0 260 36" preserveAspectRatio="none">
+                <polyline points="0,28 30,25 60,27 90,20 120,22 150,14 180,16 210,8 240,10 258,4"
+                    fill="none" stroke="#5B8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="258" cy="4" r="3.5" fill="#22D3EE"/>
+            </svg>
         </div>
     </aside>
 
@@ -254,9 +321,11 @@
             document.getElementById('mpScore').textContent = score
             document.getElementById('widgetScore').textContent = score
             const tag = score === 0 ? 'New' : score < 40 ? 'Building' : score < 75 ? 'Trusted' : 'Excellent'
-            document.getElementById('mpTag').textContent = tag
+            document.getElementById('mpTag').textContent = tag === 'New' ? 'New Member' : tag
             document.getElementById('widgetTag').textContent = tag === 'New' ? 'New Member' : tag
         }
+
+        document.getElementById('notifBadge').textContent = '0'
 
         loadFeed()
     }
