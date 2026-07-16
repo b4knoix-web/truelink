@@ -126,6 +126,16 @@
     const { createClient } = supabase
     const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
+    // ---- session id for conversation memory (per-browser, no login yet) ----
+    let SESSION_ID = localStorage.getItem('aurea_session_id')
+    if (!SESSION_ID) {
+        SESSION_ID = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
+        localStorage.setItem('aurea_session_id', SESSION_ID)
+    }
+
+    // ---- rolling in-memory history for this tab (avoids refetch on every message) ----
+    const recentHistory = []
+
     const patternBank = {
         greeting: {
             en: ["Hey! Ask me about anyone's trust score, or just talk.", "Hi. I'll give it to you straight — no sugarcoating here."],
@@ -144,8 +154,29 @@
             hi: ["{name} theek lag raha hai — {reasons}. Koi red flag nahi mila.", "Check kiya — {name} clean hai. {reasons}."]
         },
         unknown: {
-            en: ["I don't have data on that yet — ask me about a TrueLink ID or trust score."],
-            hi: ["Iske baare mein abhi data nahi hai — kisi TrueLink ID ya trust score ke baare mein pooch."]
+            en: ["I don't have data on that yet — ask me about a TrueLink ID, a product recommendation, or just talk."],
+            hi: ["Iske baare mein abhi data nahi hai — kisi TrueLink ID, product recommendation, ya bas baat kar sakte hai."]
+        },
+        // ---- EMOTIONAL LAYER: validate-first, before any advice/data ----
+        validate_upset: {
+            en: ["Hey, that sounds rough. I'm here — tell me what happened.", "Okay that's not okay. What's going on?"],
+            hi: ["Are yaar, ye toh tough hai. Bata kya hua.", "Sun raha hoon, pehle bata kya hua hai."]
+        },
+        validate_frustrated: {
+            en: ["I get why that's annoying you. Let's figure it out together.", "Yeah that would frustrate anyone. Walk me through it."],
+            hi: ["Samajh sakta hoon frustrating hai. Chal saath mein dekhte hai.", "Haan gussa aana natural hai. Bata puri baat."]
+        },
+        validate_excited: {
+            en: ["Okay I love this energy — tell me everything!", "Let's go! What happened?"],
+            hi: ["Are wah, ye toh badhiya baat hai! Pura bata.", "Mast! Poora kissa sun na."]
+        },
+        continuity_checkin: {
+            en: ["Hey, still on your mind from before? How's it going now?"],
+            hi: ["Wahi wali baat abhi tak chal rahi hai kya? Ab kaisa hai?"]
+        },
+        marketplace_no_results: {
+            en: ["I don't have enough verified data on {category} yet — need brands with 25k+ ratings on record."],
+            hi: ["{category} ke liye abhi verified data kaafi nahi hai — 25k+ ratings wale brands chahiye record mein."]
         }
     }
 
@@ -155,10 +186,33 @@
         return hindiWords.filter(w => lower.includes(w)).length >= 1 ? 'hi' : 'en'
     }
 
+    // ---- EMOTIONAL LAYER: cheap keyword-pattern emotion detector, same style as detectLanguage ----
+    function detectEmotion(text) {
+        const lower = text.toLowerCase()
+        const upsetWords = ['sad','upset','dukhi','rona','akela','hurt','broken up','breakup','naraz mujhse','depressed']
+        const frustratedWords = ['angry','gussa','frustrat','irritat','pareshan','tang aa gaya','fed up']
+        const excitedWords = ['yay','excited','mast','shandar','amazing','best day','khushi','promotion','selected']
+        if (upsetWords.some(w => lower.includes(w))) return 'upset'
+        if (frustratedWords.some(w => lower.includes(w))) return 'frustrated'
+        if (excitedWords.some(w => lower.includes(w))) return 'excited'
+        return 'neutral'
+    }
+
+    // ---- MARKETPLACE LAYER: rough category extraction from a free-text ask ----
+    function extractCategory(text) {
+        const lower = text.toLowerCase()
+        const stripWords = ['best','recommend','suggest','sabse','achha','badhiya','de','dedo','batao','mujhe','kaunsa','chahiye','ka','ki']
+        let words = lower.replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        words = words.filter(w => w && !stripWords.includes(w))
+        return words.join(' ').trim()
+    }
+
     function detectIntent(text) {
         const lower = text.toLowerCase()
         if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) return 'greeting'
         if (lower.includes('tl-') || lower.includes('score') || lower.includes('trust')) return 'trust_score_query'
+        if (/(best|recommend|suggest|sabse achha|sabse badhiya|kaunsa lu|kaunsi le)/.test(lower)) return 'marketplace_query'
+        if (/(kya hai|what is|who is|kaun hai|kya hota hai)/.test(lower)) return 'general_knowledge'
         return 'unknown'
     }
 
@@ -199,28 +253,168 @@
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)] }
     function fillTemplate(t, vars) { return t.replace(/\{(\w+)\}/g, function(_, k) { return vars[k] ?? '' }) }
 
+    // ---- confidence phrase for the metacognition-style self-check (no GPU needed, just a rule) ----
+    function confidencePhrase(reviewCount, lang) {
+        if (reviewCount >= 1000) return lang === 'hi' ? 'Is par mujhe pura bharosa hai.' : "I'm confident about this one."
+        if (reviewCount > 0) return lang === 'hi' ? 'Data thoda kam hai, but jitna hai usi pe based hai ye.' : "Limited data, but this is my best read on it."
+        return lang === 'hi' ? 'Bahut kam info hai — extra saavdhaan rehna.' : 'Very little to go on here — be extra careful.'
+    }
+
+    // ---- LOCATION: cache once per session, ask only when actually needed ----
+    let cachedLocation = null
+    function getUserLocation() {
+        return new Promise(resolve => {
+            if (cachedLocation) return resolve(cachedLocation)
+            if (!navigator.geolocation) return resolve(null)
+            navigator.geolocation.getCurrentPosition(
+                pos => { cachedLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; resolve(cachedLocation) },
+                () => resolve(null),
+                { timeout: 4000 }
+            )
+        })
+    }
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        const toRad = d => d * Math.PI / 180
+        const R = 6371
+        const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1)
+        const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2
+        return R * 2 * Math.asin(Math.sqrt(a))
+    }
+
+    // ---- MARKETPLACE ENGINE ----
+    // Expects a Supabase table `brands`: name, category, follower_count, verified (bool),
+    // rating_count, avg_rating, lat, lng
+    const RATING_THRESHOLD = 25000
+
+    async function getMarketplaceRecommendations(category) {
+        const { data: established } = await db
+            .from('brands')
+            .select('*')
+            .eq('category', category)
+            .eq('verified', true)
+            .gte('rating_count', RATING_THRESHOLD)
+            .order('avg_rating', { ascending: false })
+            .limit(2)
+
+        const { data: rising } = await db
+            .from('brands')
+            .select('*')
+            .eq('category', category)
+            .eq('verified', true)
+            .lt('rating_count', RATING_THRESHOLD)
+            .gte('follower_count', 5000)
+            .order('avg_rating', { ascending: false })
+            .limit(1)
+
+        let picks = [...(established || []), ...(rising || [])]
+        if (picks.length === 0) return null
+
+        const loc = await getUserLocation()
+        if (loc) {
+            picks = picks.map(b => ({
+                ...b,
+                distanceKm: (b.lat != null && b.lng != null) ? haversineKm(loc.lat, loc.lng, b.lat, b.lng) : null
+            }))
+        }
+        return picks
+    }
+
+    function formatMarketplaceReply(picks, category, lang) {
+        const lines = picks.map((b, i) => {
+            const tag = b.rating_count < RATING_THRESHOLD ? (lang === 'hi' ? ' (naya, badhta hua)' : ' (new, rising)') : ''
+            const near = b.distanceKm != null ? (lang === 'hi' ? `, ${Math.round(b.distanceKm)}km door` : `, ${Math.round(b.distanceKm)}km away`) : ''
+            return `${i+1}. ${b.name}${tag} — ${b.avg_rating}/5 (${b.rating_count} ratings)${near}`
+        }).join('\n')
+        const intro = lang === 'hi' ? `${category} ke liye ye mile:` : `Here's what I found for ${category}:`
+        return intro + '\n' + lines
+    }
+
+    // ---- WEB SEARCH FALLBACK (Wikipedia REST — CORS-friendly, no key needed) ----
+    // For a real search engine (Google/DuckDuckGo) a Supabase Edge Function proxy is
+    // needed since those APIs block direct browser calls (CORS) — swap the fetch URL
+    // there once that proxy exists.
+    async function searchWeb(query) {
+        try {
+            const res = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(query))
+            if (!res.ok) return null
+            const json = await res.json()
+            return json.extract || null
+        } catch (e) {
+            return null
+        }
+    }
+
+    // ---- CONVERSATION MEMORY ----
+    // Expects a Supabase table `conversation_history`: session_id, user_text, emotion, intent, response, created_at
+    async function logConversation(userText, emotion, intent, response) {
+        recentHistory.push({ emotion, intent, at: Date.now() })
+        if (recentHistory.length > 10) recentHistory.shift()
+        try {
+            await db.from('conversation_history').insert({
+                session_id: SESSION_ID, user_text: userText, emotion, intent, response
+            })
+        } catch (e) { /* non-fatal — chat still works without memory persistence */ }
+    }
+
+    function needsContinuityCheckin(emotion) {
+        if (emotion === 'neutral') return false
+        const last = recentHistory[recentHistory.length - 1]
+        return last && last.emotion === emotion
+    }
+
     async function buildResponse(userText) {
         const lang = detectLanguage(userText)
         const intent = detectIntent(userText)
+        const emotion = detectEmotion(userText)
 
-        if (intent === 'greeting') return { text: pick(patternBank.greeting[lang]), type: 'ai' }
+        let result
 
-        if (intent === 'trust_score_query') {
+        if (intent === 'greeting') {
+            result = { text: pick(patternBank.greeting[lang]), type: 'ai' }
+        } else if (intent === 'trust_score_query') {
             const user = await mockLookupUser(userText)
-            if (!user) return { text: pick(patternBank.unknown[lang]), type: 'ai' }
-            const reasons = lang === 'hi' ? user.reasons_hi : user.reasons_en
-            if (isFlaggedSuspicious(user)) {
-                return { text: fillTemplate(pick(patternBank.suspicious_flag[lang]), { name: user.name, id: user.id, reasons: reasons }), type: 'flag' }
+            if (!user) {
+                result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
             } else {
-                return { text: fillTemplate(pick(patternBank.safe_confirm[lang]), { name: user.name, id: user.id, reasons: reasons }), type: 'ai' }
+                const reasons = lang === 'hi' ? user.reasons_hi : user.reasons_en
+                const confidence = confidencePhrase(user.reasonsCount ?? (user.reasons_en.match(/\d+/) || [0])[0], lang)
+                if (isFlaggedSuspicious(user)) {
+                    result = { text: fillTemplate(pick(patternBank.suspicious_flag[lang]), { name: user.name, id: user.id, reasons: reasons }) + ' ' + confidence, type: 'flag' }
+                } else {
+                    result = { text: fillTemplate(pick(patternBank.safe_confirm[lang]), { name: user.name, id: user.id, reasons: reasons }) + ' ' + confidence, type: 'ai' }
+                }
             }
+        } else if (intent === 'marketplace_query') {
+            const category = extractCategory(userText)
+            const picks = category ? await getMarketplaceRecommendations(category) : null
+            if (!picks) {
+                result = { text: fillTemplate(pick(patternBank.marketplace_no_results[lang]), { category: category || '' }), type: 'ai' }
+            } else {
+                result = { text: formatMarketplaceReply(picks, category, lang), type: 'ai' }
+            }
+        } else if (intent === 'general_knowledge') {
+            const term = userText.replace(/(kya hai|what is|who is|kaun hai|kya hota hai)/gi, '').trim()
+            const summary = term ? await searchWeb(term) : null
+            result = summary
+                ? { text: summary, type: 'ai' }
+                : { text: pick(patternBank.unknown[lang]), type: 'ai' }
+        } else {
+            // ---- try learned community patterns before giving up ----
+            const learned = await getLearnedResponse(userText, lang)
+            result = learned ? { text: learned, type: 'ai' } : { text: pick(patternBank.unknown[lang]), type: 'ai' }
         }
 
-        // ---- try learned community patterns before giving up ----
-        const learned = await getLearnedResponse(userText, lang)
-        if (learned) return { text: learned, type: 'ai' }
+        // ---- EMOTIONAL LAYER: validate-first prefix, and a continuity check-in if the same feeling recurs ----
+        if (emotion !== 'neutral' && intent !== 'trust_score_query' && intent !== 'marketplace_query') {
+            const validateKey = 'validate_' + emotion
+            let prefix = pick(patternBank[validateKey][lang])
+            if (needsContinuityCheckin(emotion)) prefix += ' ' + pick(patternBank.continuity_checkin[lang])
+            result = { text: prefix, type: result.type }
+        }
 
-        return { text: pick(patternBank.unknown[lang]), type: 'ai' }
+        await logConversation(userText, emotion, intent, result.text)
+        return result
     }
 
     async function getLearnedResponse(userText, lang) {
