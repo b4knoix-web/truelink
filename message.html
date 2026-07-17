@@ -334,6 +334,22 @@
     // For a real search engine (Google/DuckDuckGo) a Supabase Edge Function proxy is
     // needed since those APIs block direct browser calls (CORS) — swap the fetch URL
     // there once that proxy exists.
+    // ---- OWN LLM FALLBACK: b4knoix/AURYN-v0.1 via Supabase Edge Function (keeps HF token server-side) ----
+    async function askAuryn(prompt) {
+        try {
+            const res = await fetch(SUPABASE_URL + '/functions/v1/auryn-inference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            })
+            if (!res.ok) return null
+            const data = await res.json()
+            return data.text ? data.text.trim() : null
+        } catch (e) {
+            return null
+        }
+    }
+
     async function searchWeb(query) {
         try {
             const res = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(query))
@@ -361,6 +377,28 @@
         if (emotion === 'neutral') return false
         const last = recentHistory[recentHistory.length - 1]
         return last && last.emotion === emotion
+    }
+
+    // ---- SELF-IMPROVEMENT LOOP (sandboxed, human-approved) ----
+    // Expects a Supabase table `suggestions`: id, user_text, language, tag, status
+    //   (pending/approved/rejected), proposed_response, created_at
+    // Aurea only FLAGS gaps here — nothing gets added to her real responses
+    // until a human reviews and approves it on review.html.
+    async function logSuggestion(userText, lang) {
+        try {
+            // avoid spamming duplicate suggestions for the same phrase
+            const { data: existing } = await db
+                .from('suggestions')
+                .select('id')
+                .eq('user_text', userText)
+                .eq('status', 'pending')
+                .limit(1)
+            if (existing && existing.length > 0) return
+
+            await db.from('suggestions').insert({
+                user_text: userText, language: lang, status: 'pending'
+            })
+        } catch (e) { /* non-fatal — chat still works without the suggestion log */ }
     }
 
     async function buildResponse(userText) {
@@ -400,9 +438,21 @@
                 ? { text: summary, type: 'ai' }
                 : { text: pick(patternBank.unknown[lang]), type: 'ai' }
         } else {
-            // ---- try learned community patterns before giving up ----
+            // ---- try learned community patterns first ----
             const learned = await getLearnedResponse(userText, lang)
-            result = learned ? { text: learned, type: 'ai' } : { text: pick(patternBank.unknown[lang]), type: 'ai' }
+            if (learned) {
+                result = { text: learned, type: 'ai' }
+            } else {
+                // ---- own model fallback: AURYN-v0.1 ----
+                const auryn = await askAuryn(userText)
+                if (auryn) {
+                    result = { text: auryn, type: 'ai' }
+                } else {
+                    // ---- genuinely stuck: log it as a suggestion ----
+                    await logSuggestion(userText, lang)
+                    result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
+                }
+            }
         }
 
         // ---- EMOTIONAL LAYER: validate-first prefix, and a continuity check-in if the same feeling recurs ----
