@@ -106,7 +106,7 @@
         <div>
             <div class="font-semibold text-sm">Aurea</div>
             <div class="text-[11px] text-white/40 flex items-center gap-1">
-                <span class="pulse-dot"></span> No sugarcoating. Real talk only.
+                <span class="pulse-dot"></span> Trust scores · recommendations · real talk
             </div>
         </div>
     </div>
@@ -410,7 +410,7 @@
             const validateKey = 'validate_' + emotion
             let prefix = pick(patternBank[validateKey][lang])
             if (needsContinuityCheckin(emotion)) prefix += ' ' + pick(patternBank.continuity_checkin[lang])
-            result = { text: prefix + '\n\n' + result.text, type: result.type }
+            result = { text: prefix, type: result.type }
         }
 
         await logConversation(userText, emotion, intent, result.text)
