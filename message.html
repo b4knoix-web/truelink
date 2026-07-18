@@ -213,6 +213,7 @@
         if (lower.includes('tl-') || lower.includes('score') || lower.includes('trust')) return 'trust_score_query'
         if (/(best|recommend|suggest|sabse achha|sabse badhiya|kaunsa lu|kaunsi le)/.test(lower)) return 'marketplace_query'
         if (/(kya hai|what is|who is|kaun hai|kya hota hai)/.test(lower)) return 'general_knowledge'
+        if (/(life ka matlab|zindagi|meaning of life|advice do|confused about life|kya karu|life advice|how to deal with)/.test(lower)) return 'life_advice'
         return 'unknown'
     }
 
@@ -361,6 +362,45 @@
         }
     }
 
+    // ---- BOOK-INSIGHTS LAYER: wisdom pulled from public-domain classics ----
+    async function getBookInsight(userText) {
+        const stopWords = ['life','ka','matlab','zindagi','meaning','of','advice','do','confused','about','kya','karu','how','to','deal','with']
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3 && !stopWords.includes(w))[0]
+
+        let query = db.from('book_insights').select('insight_text, title')
+        query = keyword ? query.ilike('insight_text', `%${keyword}%`) : query
+        const { data } = await query.limit(20)
+
+        if (!data || data.length === 0) {
+            // fall back to any random insight rather than nothing
+            const { data: any } = await db.from('book_insights').select('insight_text, title').limit(50)
+            if (!any || any.length === 0) return null
+            const pickAny = any[Math.floor(Math.random() * any.length)]
+            return `${pickAny.insight_text} — ${pickAny.title}`
+        }
+        const picked = data[Math.floor(Math.random() * data.length)]
+        return `${picked.insight_text} — ${picked.title}`
+    }
+
+    // ---- REAL-HUMAN EMOTIONAL PHRASING: pulls an authentic line instead of only static templates ----
+    const emotionMap = {
+        upset: ['sad', 'lonely', 'devastated', 'disappointed', 'grieving'],
+        frustrated: ['angry', 'annoyed', 'furious'],
+        excited: ['excited', 'joyful', 'proud', 'hopeful']
+    }
+    async function getHumanEmotionPhrase(emotion) {
+        const labels = emotionMap[emotion]
+        if (!labels) return null
+        const { data } = await db
+            .from('emotion_conversations')
+            .select('human_response')
+            .in('emotion', labels)
+            .limit(50)
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].human_response
+    }
+
     // ---- CONVERSATION MEMORY ----
     // Expects a Supabase table `conversation_history`: session_id, user_text, emotion, intent, response, created_at
     async function logConversation(userText, emotion, intent, response) {
@@ -431,6 +471,11 @@
             } else {
                 result = { text: formatMarketplaceReply(picks, category, lang), type: 'ai' }
             }
+        } else if (intent === 'life_advice') {
+            const insight = await getBookInsight(userText)
+            result = insight
+                ? { text: insight, type: 'ai' }
+                : { text: pick(patternBank.unknown[lang]), type: 'ai' }
         } else if (intent === 'general_knowledge') {
             const term = userText.replace(/(kya hai|what is|who is|kaun hai|kya hota hai)/gi, '').trim()
             const summary = term ? await searchWeb(term) : null
@@ -443,14 +488,20 @@
             if (learned) {
                 result = { text: learned, type: 'ai' }
             } else {
-                // ---- own model fallback: AURYN-v0.1 ----
-                const auryn = await askAuryn(userText)
-                if (auryn) {
-                    result = { text: auryn, type: 'ai' }
+                // ---- try a real casual-chat match (free, fast — before calling AURYN) ----
+                const casual = lang === 'en' ? await getCasualResponse(userText) : null
+                if (casual) {
+                    result = { text: casual, type: 'ai' }
                 } else {
-                    // ---- genuinely stuck: log it as a suggestion ----
-                    await logSuggestion(userText, lang)
-                    result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
+                    // ---- own model fallback: AURYN-v0.1 ----
+                    const auryn = await askAuryn(userText)
+                    if (auryn) {
+                        result = { text: auryn, type: 'ai' }
+                    } else {
+                        // ---- genuinely stuck: log it as a suggestion ----
+                        await logSuggestion(userText, lang)
+                        result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
+                    }
                 }
             }
         }
@@ -460,11 +511,33 @@
             const validateKey = 'validate_' + emotion
             let prefix = pick(patternBank[validateKey][lang])
             if (needsContinuityCheckin(emotion)) prefix += ' ' + pick(patternBank.continuity_checkin[lang])
+            // occasionally blend in a real human phrase (English only — dataset is English)
+            if (lang === 'en' && Math.random() < 0.3) {
+                const humanLine = await getHumanEmotionPhrase(emotion)
+                if (humanLine) prefix += ' ' + humanLine
+            }
             result = { text: prefix, type: result.type }
         }
 
         await logConversation(userText, emotion, intent, result.text)
         return result
+    }
+
+    // ---- REAL-CASUAL-CHAT LAYER: keyword-matched real dost-jaisi replies from DailyDialog ----
+    async function getCasualResponse(userText) {
+        const stopWords = ['the','a','an','is','are','was','were','do','you','i','me','my','to','of','and','hai','ka','ki','ke','main','mujhe','tu','tera']
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3 && !stopWords.includes(w))[0]
+        if (!keyword) return null
+
+        const { data } = await db
+            .from('casual_conversations')
+            .select('message')
+            .ilike('message', `%${keyword}%`)
+            .limit(20)
+
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].message.trim()
     }
 
     async function getLearnedResponse(userText, lang) {
