@@ -488,14 +488,20 @@
             if (learned) {
                 result = { text: learned, type: 'ai' }
             } else {
-                // ---- own model fallback: AURYN-v0.1 ----
-                const auryn = await askAuryn(userText)
-                if (auryn) {
-                    result = { text: auryn, type: 'ai' }
+                // ---- try a real casual-chat match (free, fast — before calling AURYN) ----
+                const casual = lang === 'en' ? await getCasualResponse(userText) : null
+                if (casual) {
+                    result = { text: casual, type: 'ai' }
                 } else {
-                    // ---- genuinely stuck: log it as a suggestion ----
-                    await logSuggestion(userText, lang)
-                    result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
+                    // ---- own model fallback: AURYN-v0.1 ----
+                    const auryn = await askAuryn(userText)
+                    if (auryn) {
+                        result = { text: auryn, type: 'ai' }
+                    } else {
+                        // ---- genuinely stuck: log it as a suggestion ----
+                        await logSuggestion(userText, lang)
+                        result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
+                    }
                 }
             }
         }
@@ -515,6 +521,23 @@
 
         await logConversation(userText, emotion, intent, result.text)
         return result
+    }
+
+    // ---- REAL-CASUAL-CHAT LAYER: keyword-matched real dost-jaisi replies from DailyDialog ----
+    async function getCasualResponse(userText) {
+        const stopWords = ['the','a','an','is','are','was','were','do','you','i','me','my','to','of','and','hai','ka','ki','ke','main','mujhe','tu','tera']
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3 && !stopWords.includes(w))[0]
+        if (!keyword) return null
+
+        const { data } = await db
+            .from('casual_conversations')
+            .select('message')
+            .ilike('message', `%${keyword}%`)
+            .limit(20)
+
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].message.trim()
     }
 
     async function getLearnedResponse(userText, lang) {
