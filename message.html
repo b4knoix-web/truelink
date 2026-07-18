@@ -212,8 +212,8 @@
         if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) return 'greeting'
         if (lower.includes('tl-') || lower.includes('score') || lower.includes('trust')) return 'trust_score_query'
         if (/(best|recommend|suggest|sabse achha|sabse badhiya|kaunsa lu|kaunsi le)/.test(lower)) return 'marketplace_query'
-        if (/(kya hai|what is|who is|kaun hai|kya hota hai)/.test(lower)) return 'general_knowledge'
         if (/(life ka matlab|zindagi|meaning of life|advice do|confused about life|kya karu|life advice|how to deal with)/.test(lower)) return 'life_advice'
+        if (/(kya hai|what is|who is|kaun hai|kya hota hai)/.test(lower)) return 'general_knowledge'
         return 'unknown'
     }
 
