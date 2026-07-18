@@ -174,6 +174,18 @@
             en: ["Hey, still on your mind from before? How's it going now?"],
             hi: ["Wahi wali baat abhi tak chal rahi hai kya? Ab kaisa hai?"]
         },
+        rude_warning_1: {
+            en: ["Not gonna lie, that was uncalled for. Let's reset — try that again?", "Whoa. I'll let that slide once — talk to me straight."],
+            hi: ["Seedha bolu, ye zaroorat nahi thi. Dobara try kar, thoda theek se.", "Ek baar chhod raha hoon — seedhe se baat kar."]
+        },
+        rude_warning_2: {
+            en: ["Second time now. I'm not here to be talked down to — dial it back.", "That's twice. I've got patience, not infinite patience."],
+            hi: ["Dusri baar ho gaya ye. Mujhse aise baat mat kar.", "Do baar ho chuka — thoda dhyan rakh ab."]
+        },
+        suspend_notice: {
+            en: ["That's three. I'm flagging this conversation — someone will review it. Take care."],
+            hi: ["Teen baar ho gaya. Ye conversation flag kar rahi hoon review ke liye. Theek rehna."]
+        },
         marketplace_no_results: {
             en: ["I don't have enough verified data on {category} yet — need brands with 25k+ ratings on record."],
             hi: ["{category} ke liye abhi verified data kaafi nahi hai — 25k+ ratings wale brands chahiye record mein."]
@@ -187,6 +199,27 @@
     }
 
     // ---- EMOTIONAL LAYER: cheap keyword-pattern emotion detector, same style as detectLanguage ----
+    // ---- RUDENESS DETECTION: insults directed at Aurea (not slurs, just common put-downs) ----
+    function detectRudeness(text) {
+        const lower = text.toLowerCase()
+        const rudeWords = ['bekar', 'bakwas', 'nikamma', 'stupid', 'useless', 'dumb', 'shut up', 'chup kar', 'faltu', 'idiot', 'pathetic', 'worthless']
+        return rudeWords.some(w => lower.includes(w))
+    }
+
+    function getRudeCount() {
+        return parseInt(localStorage.getItem('aurea_rude_count') || '0')
+    }
+    function incrementRudeCount() {
+        const count = getRudeCount() + 1
+        localStorage.setItem('aurea_rude_count', String(count))
+        return count
+    }
+    async function flagAccount() {
+        try {
+            await db.from('account_flags').insert({ session_id: SESSION_ID, reason: 'repeated_rudeness' })
+        } catch (e) { /* non-fatal */ }
+    }
+
     function detectEmotion(text) {
         const lower = text.toLowerCase()
         const upsetWords = ['sad','upset','dukhi','rona','akela','hurt','broken up','breakup','naraz mujhse','depressed']
@@ -443,6 +476,21 @@
 
     async function buildResponse(userText) {
         const lang = detectLanguage(userText)
+
+        // ---- RUDENESS CHECK: takes priority over everything else ----
+        if (detectRudeness(userText)) {
+            const count = incrementRudeCount()
+            let text
+            if (count === 1) text = pick(patternBank.rude_warning_1[lang])
+            else if (count === 2) text = pick(patternBank.rude_warning_2[lang])
+            else {
+                text = pick(patternBank.suspend_notice[lang])
+                await flagAccount()
+            }
+            await logConversation(userText, 'rude', 'rudeness', text)
+            return { text, type: 'flag' }
+        }
+
         const intent = detectIntent(userText)
         const emotion = detectEmotion(userText)
 
