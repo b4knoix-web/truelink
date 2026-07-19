@@ -444,6 +444,20 @@
         return `${picked.insight_text} — ${picked.title}`
     }
 
+    // ---- REAL LIFE-STORIES: authentic personal-experience excerpts from real blog posts ----
+    async function getLifeStoryExcerpt(userText) {
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3)[0]
+        if (!keyword) return null
+        const { data } = await db
+            .from('life_stories')
+            .select('excerpt')
+            .ilike('excerpt', `%${keyword}%`)
+            .limit(30)
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].excerpt
+    }
+
     // ---- REAL-HUMAN EMOTIONAL PHRASING: pulls an authentic line instead of only static templates ----
     const emotionMap = {
         upset: ['sad', 'lonely', 'devastated', 'disappointed', 'grieving'],
@@ -594,10 +608,16 @@
                 result = { text: formatMarketplaceReply(picks, category, lang), type: 'ai' }
             }
         } else if (intent === 'life_advice') {
-            const insight = await getBookInsight(userText)
-            result = insight
-                ? { text: insight, type: 'ai' }
-                : { text: pick(patternBank.unknown[lang]), type: 'ai' }
+            const useStory = Math.random() < 0.4
+            const story = useStory ? await getLifeStoryExcerpt(userText) : null
+            if (story) {
+                result = { text: story, type: 'ai' }
+            } else {
+                const insight = await getBookInsight(userText)
+                result = insight
+                    ? { text: insight, type: 'ai' }
+                    : { text: pick(patternBank.unknown[lang]), type: 'ai' }
+            }
         } else if (intent === 'general_knowledge') {
             const term = userText.replace(/(kya hai|what is|who is|kaun hai|kya hota hai)/gi, '').trim()
             const summary = term ? await searchWeb(term) : null
