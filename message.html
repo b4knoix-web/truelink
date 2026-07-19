@@ -135,6 +135,7 @@
 
     // ---- rolling in-memory history for this tab (avoids refetch on every message) ----
     const recentHistory = []
+    let lastExchange = null  // { question, answer } — used to detect corrections to Aurea's last reply
 
     const patternBank = {
         greeting: {
@@ -501,6 +502,35 @@
         } catch (e) { /* non-fatal — chat still works without the suggestion log */ }
     }
 
+    // ---- CORRECTION / TEACHING LOOP: user corrects or confirms Aurea's last answer ----
+    function detectCorrection(text) {
+        const lower = text.toLowerCase()
+        const correctionWords = ['galat hai', 'galat bola', 'wrong', 'not correct', 'incorrect', 'actually', 'nahi, ', 'sahi jawab', 'correction']
+        return correctionWords.some(w => lower.includes(w))
+    }
+
+    async function saveCorrection(question, aureaAnswer, userCorrection) {
+        try {
+            await db.from('corrections').insert({
+                question, aurea_answer: aureaAnswer, user_correction: userCorrection, status: 'pending'
+            })
+        } catch (e) { /* non-fatal */ }
+    }
+
+    // ---- TAUGHT KNOWLEDGE: approved corrections that Aurea now actually uses ----
+    async function getTaughtAnswer(userText) {
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3)[0]
+        if (!keyword) return null
+        const { data } = await db
+            .from('taught_facts')
+            .select('answer')
+            .ilike('question', `%${keyword}%`)
+            .limit(5)
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].answer
+    }
+
     async function buildResponse(userText) {
         const lang = detectLanguage(userText)
 
@@ -523,6 +553,16 @@
             }
             await logConversation(userText, 'rude', 'rudeness', text)
             return { text, type: 'flag' }
+        }
+
+        // ---- CORRECTION CHECK: user is correcting/teaching Aurea's last answer ----
+        if (lastExchange && detectCorrection(userText)) {
+            await saveCorrection(lastExchange.question, lastExchange.answer, userText)
+            const ackText = lang === 'hi'
+                ? "Samajh gayi — ye note kar liya, review ke baad seekh lungi."
+                : "Got it — noted that, I'll learn it properly once it's reviewed."
+            await logConversation(userText, 'neutral', 'correction', ackText)
+            return { text: ackText, type: 'ai' }
         }
 
         const intent = detectIntent(userText)
@@ -565,6 +605,11 @@
                 ? { text: summary, type: 'ai' }
                 : { text: pick(patternBank.unknown[lang]), type: 'ai' }
         } else {
+            // ---- taught knowledge (human-approved corrections) — highest priority fallback ----
+            const taught = await getTaughtAnswer(userText)
+            if (taught) {
+                result = { text: taught, type: 'ai' }
+            } else {
             // ---- try learned community patterns first ----
             const learned = await getLearnedResponse(userText, lang)
             if (learned) {
@@ -586,6 +631,7 @@
                     }
                 }
             }
+            }
         }
 
         // ---- EMOTIONAL LAYER: validate-first prefix, and a continuity check-in if the same feeling recurs ----
@@ -602,6 +648,7 @@
         }
 
         await logConversation(userText, emotion, intent, result.text)
+        lastExchange = { question: userText, answer: result.text }
         return result
     }
 

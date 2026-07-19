@@ -1,699 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TrueLink — Leave a Review</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #e8e8e8; color: #000; font-size: 13px; }
-
-        nav {
-            background: #1877f2;
-            padding: 8px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #1565d8;
-        }
-        .logo { color: white; font-size: 24px; font-weight: bold; }
-        .nav-right { display: flex; gap: 8px; align-items: center; }
-        .nav-right input {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 3px;
-            font-size: 12px;
-            width: 150px;
-        }
-        .btn-login {
-            padding: 5px 14px;
-            background: white;
-            color: #1877f2;
-            border: none;
-            border-radius: 3px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-login:hover { background: #e8f0fe; }
-
-        .nav-links-bar {
-            background: #1565d8;
-            padding: 5px 20px;
-            display: flex;
-            gap: 20px;
-        }
-        .nav-links-bar a {
-            color: rgba(255,255,255,0.85);
-            text-decoration: none;
-            font-size: 12px;
-            padding: 3px 0;
-        }
-        .nav-links-bar a:hover { color: white; text-decoration: underline; }
-        .nav-links-bar a.active { color: white; font-weight: bold; }
-
-        .page-bar {
-            background: #3b5998;
-            padding: 6px 20px;
-            color: white;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .main {
-            display: flex;
-            max-width: 900px;
-            margin: 20px auto;
-            gap: 14px;
-            align-items: flex-start;
-            padding: 0 20px;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 200px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .side-box { background: white; border: 1px solid #aaa; }
-        .side-box-header {
-            background: #3b5998;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .side-box-body {
-            padding: 10px;
-            font-size: 12px;
-            color: #333;
-            line-height: 1.9;
-        }
-        .side-box-body a {
-            color: #1877f2;
-            text-decoration: none;
-            display: block;
-        }
-        .side-box-body a:hover { text-decoration: underline; }
-
-        .rule-item {
-            display: flex;
-            gap: 6px;
-            font-size: 11px;
-            padding: 3px 0;
-            border-bottom: 1px dotted #eee;
-            line-height: 1.5;
-        }
-        .rule-item:last-child { border-bottom: none; }
-        .rule-ok { color: #1a6e0a; font-weight: bold; }
-        .rule-no { color: #cc0000; font-weight: bold; }
-
-        /* CONTENT */
-        .content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-
-        .box { background: white; border: 1px solid #aaa; }
-        .box-header {
-            background: #3b5998;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .box-body { padding: 14px; }
-
-        /* STEP LABEL */
-        .step-label {
-            font-weight: bold;
-            font-size: 12px;
-            color: #3b5998;
-            margin-bottom: 6px;
-            margin-top: 14px;
-            border-left: 3px solid #1877f2;
-            padding-left: 8px;
-        }
-        .step-label:first-child { margin-top: 0; }
-
-        /* MSG */
-        .msg {
-            padding: 7px 10px;
-            font-size: 12px;
-            margin-bottom: 10px;
-            border-radius: 2px;
-            display: none;
-        }
-        .msg.error { background: #fde8e8; border: 1px solid #cc0000; color: #cc0000; display: block; }
-        .msg.success { background: #e8f5e9; border: 1px solid #42b72a; color: #1a6e0a; display: block; }
-
-        /* SEARCH ROW */
-        .search-row { display: flex; gap: 6px; }
-        .search-row input {
-            flex: 1;
-            padding: 7px 10px;
-            border: 1px solid #aaa;
-            font-size: 13px;
-            outline: none;
-        }
-        .search-row input:focus { border-color: #1877f2; }
-        .btn-search {
-            padding: 7px 18px;
-            background: #1877f2;
-            color: white;
-            border: none;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-search:hover { background: #1255b5; }
-
-        /* FOUND CARD */
-        .found-card {
-            display: none;
-            background: #f0f4ff;
-            border: 1px solid #b0c0e8;
-            padding: 10px 12px;
-            margin-top: 10px;
-            align-items: center;
-            gap: 12px;
-        }
-        .found-card.show { display: flex; }
-        .found-avatar {
-            width: 44px; height: 44px;
-            background: #dde;
-            border: 1px solid #aaa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-        }
-        .found-name { font-weight: bold; font-size: 13px; }
-        .found-id { color: #1877f2; font-size: 11px; }
-        .found-badge {
-            background: #e8f5e9;
-            border: 1px solid #42b72a;
-            color: #1a6e0a;
-            font-size: 10px;
-            padding: 2px 8px;
-            font-weight: bold;
-            margin-left: auto;
-        }
-
-        /* REVIEW FORM — hidden until search */
-        .review-form { display: none; }
-        .review-form.show { display: block; }
-
-        /* STARS */
-        .stars-row { display: flex; gap: 6px; margin-top: 4px; }
-        .star-btn {
-            font-size: 28px;
-            cursor: pointer;
-            color: #ddd;
-            border: none;
-            background: none;
-            padding: 0;
-            line-height: 1;
-        }
-        .star-btn.active { color: #f4a000; }
-        .star-hint { font-size: 11px; color: #888; margin-top: 4px; }
-
-        /* DEAL TYPE */
-        .type-row { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
-        .type-btn {
-            padding: 6px 16px;
-            border: 1px solid #aaa;
-            background: #f2f2f2;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .type-btn:hover { background: #e0e8ff; border-color: #1877f2; }
-        .type-btn.sel-good { background: #e8f5e9; border-color: #42b72a; color: #1a6e0a; font-weight: bold; }
-        .type-btn.sel-bad { background: #fde8e8; border-color: #cc0000; color: #cc0000; font-weight: bold; }
-        .type-btn.sel-neutral { background: #fff8e1; border-color: #f4c542; color: #856404; font-weight: bold; }
-
-        /* TEXTAREA */
-        textarea {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #aaa;
-            font-size: 12px;
-            font-family: Arial;
-            resize: vertical;
-            margin-top: 4px;
-            outline: none;
-        }
-        textarea:focus { border-color: #1877f2; }
-
-        /* AMOUNT */
-        .amount-row { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-        .amount-row span { font-weight: bold; color: #333; font-size: 14px; }
-        .amount-row input {
-            padding: 6px 10px;
-            border: 1px solid #aaa;
-            font-size: 13px;
-            width: 160px;
-            outline: none;
-        }
-        .amount-row input:focus { border-color: #1877f2; }
-
-        /* UPLOAD */
-        .upload-box {
-            border: 2px dashed #aaa;
-            padding: 16px;
-            text-align: center;
-            cursor: pointer;
-            margin-top: 4px;
-            background: #f9f9f9;
-        }
-        .upload-box:hover { border-color: #1877f2; background: #f0f4ff; }
-        .upload-box input { display: none; }
-        .upload-box .u-icon { font-size: 22px; margin-bottom: 4px; }
-        .upload-box strong { color: #1877f2; font-size: 12px; }
-        .upload-box p { font-size: 11px; color: #666; margin-top: 3px; }
-        .upload-done { font-size: 11px; color: #1a6e0a; font-weight: bold; margin-top: 6px; display: none; }
-
-        /* AGREE */
-        .agree-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin-top: 10px;
-            font-size: 11px;
-            color: #444;
-            line-height: 1.6;
-        }
-        .agree-row input { margin-top: 2px; flex-shrink: 0; }
-
-        /* SUBMIT ROW */
-        .submit-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 1px solid #ddd;
-        }
-        .btn-submit {
-            padding: 8px 24px;
-            background: #42b72a;
-            color: white;
-            border: 1px solid #2d8a1a;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-submit:hover { background: #36a420; }
-        .btn-cancel {
-            padding: 8px 16px;
-            background: #f2f2f2;
-            color: #555;
-            border: 1px solid #aaa;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        .btn-cancel:hover { background: #e0e0e0; }
-        .submit-note { font-size: 11px; color: #888; }
-
-        /* SUCCESS */
-        .success-section { display: none; }
-        .success-box {
-            background: #e8f5e9;
-            border: 1px solid #42b72a;
-            padding: 24px;
-            text-align: center;
-        }
-        .success-box h3 { color: #1a6e0a; font-size: 16px; margin-bottom: 8px; }
-        .success-box p { font-size: 12px; color: #333; line-height: 1.8; margin-bottom: 6px; }
-        .cert-id { font-size: 15px; font-weight: bold; color: #1877f2; margin: 10px 0; }
-        .btn-go-profile {
-            padding: 8px 22px;
-            background: #1877f2;
-            color: white;
-            border: none;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .btn-go-profile:hover { background: #1255b5; }
-
-        /* VERIFICATION INFO */
-        .verify-info {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-        }
-        .verify-info-header {
-            background: #3b5998;
-            color: white;
-            padding: 5px 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .verify-info-body {
-            padding: 12px;
-            font-size: 12px;
-            color: #333;
-            line-height: 2;
-        }
-        .verify-rule { display: flex; gap: 8px; align-items: flex-start; }
-        .verify-rule .vr-icon { flex-shrink: 0; }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            color: #888;
-            font-size: 11px;
-            margin-top: 10px;
-            border-top: 1px solid #ddd;
-            background: white;
-        }
-        footer a { color: #1877f2; text-decoration: none; margin: 0 6px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrueLink — Review Corrections</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    body { background: #0b0f1a; color: #e4e7f0; margin: 0; padding: 40px 20px; }
+    h1 { font-size: 20px; margin-bottom: 4px; }
+    .sub { color: #565d75; font-size: 13px; margin-bottom: 24px; }
+    .card {
+        background: #12172a; border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; max-width: 720px;
+    }
+    .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #7b8ba3; margin-bottom: 4px; }
+    .q { font-size: 14px; margin-bottom: 12px; }
+    .old-answer { font-size: 13px; color: #ff9b9b; margin-bottom: 12px; }
+    .correction { font-size: 13px; color: #4ade80; margin-bottom: 16px; }
+    .btns { display: flex; gap: 10px; }
+    button {
+        border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px;
+        font-weight: 600; cursor: pointer;
+    }
+    .approve { background: #4ade80; color: #0b0f1a; }
+    .reject { background: rgba(255,90,90,0.15); color: #ff9b9b; border: 1px solid rgba(255,90,90,0.3); }
+    .empty { color: #565d75; font-size: 14px; }
+</style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-    <div class="logo">TrueLink</div>
-    <div class="nav-right">
-        <input type="text" placeholder="Email or Phone">
-        <input type="password" placeholder="Password" style="width:110px;">
-        <button class="btn-login">Log In</button>
-    </div>
-</nav>
+<h1>Review Corrections</h1>
+<div class="sub">Approve to teach Aurea permanently, reject to discard.</div>
+<div id="list"></div>
 
-<div class="nav-links-bar">
-    <a href="index.html">Home</a>
-    <a href="signup.html">Sign Up</a>
-    <a href="profile.html">Search ID</a>
-    <a href="marketplace.html">Marketplace</a>
-    <a href="review.html" class="active">Leave Review</a>
-    <a href="faq.html">FAQ</a>
-    <a href="dashboard.html">My Dashboard</a>
-    <a href="message.html">Message</a>
-    <a href="community.html">community</a>
-</div>
-
-<div class="page-bar">Leave a Verified Review</div>
-
-<div class="main">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="side-box">
-            <div class="side-box-header">My Account</div>
-            <div class="side-box-body">
-                <a href="signup.html">→ Create My ID</a>
-                <a href="#">→ My Profile</a>
-                <a href="#">→ My Reviews Given</a>
-                <a href="#">→ My Reviews Received</a>
-                <a href="index.html">→ Home</a>
-            </div>
-        </div>
-
-        <div class="side-box">
-            <div class="side-box-header">Review Rules</div>
-            <div class="side-box-body">
-                <div class="rule-item">
-                    <span class="rule-ok">✓</span>
-                    <span>Proof is required for every review</span>
-                </div>
-                <div class="rule-item">
-                    <span class="rule-ok">✓</span>
-                    <span>Must be a real completed deal</span>
-                </div>
-                <div class="rule-item">
-                    <span class="rule-ok">✓</span>
-                    <span>Be honest and specific</span>
-                </div>
-                <div class="rule-item">
-                    <span class="rule-no">✗</span>
-                    <span>No fake or paid reviews</span>
-                </div>
-                <div class="rule-item">
-                    <span class="rule-no">✗</span>
-                    <span>No duplicate reviews</span>
-                </div>
-                <div class="rule-item">
-                    <span class="rule-no">✗</span>
-                    <span>No reviews without proof</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="side-box">
-            <div class="side-box-header">How It Works</div>
-            <div class="side-box-body">
-                1. Search the person's ID<br>
-                2. Give a star rating<br>
-                3. Write your review<br>
-                4. Upload proof<br>
-                5. Submit<br><br>
-                <strong style="color:#1a6e0a;">System verifies automatically ✓</strong>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONTENT -->
-    <div class="content">
-
-        <!-- MAIN FORM BOX -->
-        <div class="box" id="formBox">
-            <div class="box-header">Submit a Verified Review</div>
-            <div class="box-body">
-
-                <div class="msg" id="msg"></div>
-
-                <!-- STEP 1 — SEARCH -->
-                <div class="step-label">Step 1 — Search the TrueLink ID of the person you want to review</div>
-                <div class="search-row">
-                    <input type="text" id="searchInput" placeholder="Enter TrueLink ID — e.g. TL-4829-XK">
-                    <button class="btn-search" onclick="searchPerson()">Search</button>
-                </div>
-
-                <!-- FOUND CARD -->
-                <div class="found-card" id="foundCard">
-                    <div class="found-avatar">👤</div>
-                    <div>
-                        <div class="found-name" id="foundName">—</div>
-                        <div class="found-id" id="foundID">—</div>
-                    </div>
-                    <div class="found-badge">✓ TrueLink Verified</div>
-                </div>
-
-                <!-- REVIEW FORM -->
-                <div class="review-form" id="reviewForm">
-
-                    <!-- STEP 2 — STARS -->
-                    <div class="step-label">Step 2 — Give a Star Rating</div>
-                    <div class="stars-row">
-                        <button class="star-btn" onclick="setStar(1)">★</button>
-                        <button class="star-btn" onclick="setStar(2)">★</button>
-                        <button class="star-btn" onclick="setStar(3)">★</button>
-                        <button class="star-btn" onclick="setStar(4)">★</button>
-                        <button class="star-btn" onclick="setStar(5)">★</button>
-                    </div>
-                    <div class="star-hint" id="starHint">Click a star to rate</div>
-
-                    <!-- DEAL TYPE -->
-                    <div class="step-label">How was the deal?</div>
-                    <div class="type-row">
-                        <button class="type-btn" id="tGood" onclick="setType('good')">👍 Good Deal</button>
-                        <button class="type-btn" id="tBad" onclick="setType('bad')">👎 Bad Deal</button>
-                        <button class="type-btn" id="tNeutral" onclick="setType('neutral')">😐 Neutral</button>
-                    </div>
-
-                    <!-- STEP 3 — WRITE REVIEW -->
-                    <div class="step-label">Step 3 — Write Your Review</div>
-                    <textarea id="reviewText" rows="4" placeholder="Describe your experience — Was the work delivered on time? Was quality good? Would you recommend this person?"></textarea>
-
-                    <!-- DEAL AMOUNT -->
-                    <div class="step-label">Deal Amount (Optional)</div>
-                    <div class="amount-row">
-                        <span>₹</span>
-                        <input type="number" id="dealAmount" placeholder="e.g. 5000">
-                    </div>
-
-                    <!-- STEP 4 — PROOF -->
-                    <div class="step-label">Step 4 — Upload Proof (Required)</div>
-                    <div class="upload-box" onclick="document.getElementById('proofFile').click()">
-                        <input type="file" id="proofFile" accept="image/*,.pdf" onchange="fileSelected(this)">
-                        <div class="u-icon">📎</div>
-                        <strong>Click to Upload Proof</strong>
-                        <p>Payment screenshot · Chat history · Receipt · PDF</p>
-                    </div>
-                    <div class="upload-done" id="uploadDone"></div>
-
-                    <!-- AGREE -->
-                    <div class="agree-row">
-                        <input type="checkbox" id="agreeCheck">
-                        <label for="agreeCheck">I confirm this review is based on a real deal and I am not submitting a fake review. I understand that fake reviews may result in account suspension.</label>
-                    </div>
-
-                    <!-- SUBMIT -->
-                    <div class="submit-row">
-                        <button class="btn-submit" onclick="submitReview()">✓ Submit Verified Review</button>
-                        <button class="btn-cancel" onclick="window.location.href='index.html'">Cancel</button>
-                        <span class="submit-note">Proof will be verified automatically</span>
-                    </div>
-
-                </div>
-                <!-- END REVIEW FORM -->
-
-            </div>
-        </div>
-
-        <!-- SUCCESS SECTION -->
-        <div class="success-section" id="successSection">
-            <div class="box">
-                <div class="box-header">Review Submitted Successfully</div>
-                <div class="success-box">
-                    <h3>✓ Your Review Has Been Submitted!</h3>
-                    <p>Your review is now in the verification queue.<br>
-                    Our system will check your proof within 24 hours.<br>
-                    Once verified, it will appear live on the profile.</p>
-                    <div class="cert-id" id="certID"></div>
-                    <p>Save this Certificate ID for your records.<br>
-                    It can be used as evidence in case of any future dispute.</p>
-                    <button class="btn-go-profile" onclick="window.location.href='profile.html'">View Profile →</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- HOW VERIFICATION WORKS -->
-        <div class="verify-info">
-            <div class="verify-info-header">How Our Verification System Works</div>
-            <div class="verify-info-body">
-                <div class="verify-rule"><span class="vr-icon">🔴</span><span><strong>Rule 1:</strong> 3 or more reviews from the same IP address → Automatically blocked</span></div>
-                <div class="verify-rule"><span class="vr-icon">🔴</span><span><strong>Rule 2:</strong> Account less than 1 day old + review → Automatically blocked</span></div>
-                <div class="verify-rule"><span class="vr-icon">🔴</span><span><strong>Rule 3:</strong> No proof uploaded → Automatically blocked</span></div>
-                <div class="verify-rule"><span class="vr-icon">🔴</span><span><strong>Rule 4:</strong> Review less than 10 words → Automatically blocked</span></div>
-                <div class="verify-rule"><span class="vr-icon">🔴</span><span><strong>Rule 5:</strong> Edited or fake proof file → Automatically blocked</span></div>
-                <div class="verify-rule"><span class="vr-icon">🟢</span><span><strong>All rules pass →</strong> Review goes live as Verified ✓</span></div>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<footer>
-    <a href="index.html">Home</a>
-    <a href="signup.html">Sign Up</a>
-    <a href="profile.html">Search ID</a>
-    <a href="marketplace.html">Marketplace</a>
-    <a href="#">Privacy Policy</a>
-    <a href="#">Terms</a>
-    <br><br>
-    © 2026 TrueLink · Trust. Verified.
-</footer>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = 'https://vfolauskglbihqmlyqlt.supabase.co'
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
-const { createClient } = supabase
-const db = createClient(SUPABASE_URL, SUPABASE_KEY)
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmb2xhdXNrZ2xiaWhxbWx5cWx0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MjU1NjgsImV4cCI6MjA5ODIwMTU2OH0.vXF77v3dCDjHFAhF7bBXxPEQ2tY6h8JNdJDmbuEiIHI'
+    const { createClient } = supabase
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-window.onload = async function() {
-    const { data: { user } } = await db.auth.getUser()
-    if (user) {
-        const homeLink = document.querySelector('.nav-links-bar a[href="index.html"]')
-        if (homeLink) homeLink.style.display = 'none'
-        const sideHome = document.querySelector('.side-box-body a[href="index.html"]')
-        if (sideHome) sideHome.style.display = 'none'
-        const sideCreate = document.querySelector('.side-box-body a[href="signup.html"]')
-        if (sideCreate) sideCreate.style.display = 'none'
-    }
-}
-    let selectedStars = 0;
-    let selectedType = '';
+    async function loadCorrections() {
+        const { data, error } = await db
+            .from('corrections')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
 
-    function showMsg(text, type) {
-        const el = document.getElementById('msg');
-        el.textContent = text;
-        el.className = 'msg ' + type;
-        setTimeout(() => { el.className = 'msg'; el.textContent = ''; }, 3500);
-    }
+        const list = document.getElementById('list')
+        list.innerHTML = ''
 
-    // Demo profiles
-    const demoProfiles = {
-        'TL-4829-XK': 'Rahul Sharma',
-        'TL-2910-AK': 'Priya Mehta',
-        'TL-5521-BM': 'Amit Singh'
-    };
-
-    async function searchPerson() {
-    const input = document.getElementById('searchInput').value.trim().toUpperCase();
-    if (!input) { showMsg('Please enter a TrueLink ID.', 'error'); return; }
-    if (!input.startsWith('TL-')) { showMsg('Please enter a valid TrueLink ID — format: TL-XXXX-XX', 'error'); return; }
-
-    const { data, error } = await db.from('Truelink').select('*').eq('truelink_id', input).single();
-
-    if (error || !data) {
-        showMsg('No profile found for this ID.', 'error');
-        return;
-    }
-
-    const name = (data.first_name || '') + ' ' + (data.last_name || '');
-    document.getElementById('foundName').textContent = name.trim() || 'TrueLink User';
-    document.getElementById('foundID').textContent = input;
-    document.getElementById('foundCard').classList.add('show');
-    document.getElementById('reviewForm').classList.add('show');
-}
-
-    function setStar(n) {
-        selectedStars = n;
-        const btns = document.querySelectorAll('.star-btn');
-        btns.forEach((b, i) => b.classList.toggle('active', i < n));
-        const labels = ['', '1 Star — Very Bad', '2 Stars — Bad', '3 Stars — Okay', '4 Stars — Good', '5 Stars — Excellent'];
-        document.getElementById('starHint').textContent = labels[n];
-    }
-
-    function setType(type) {
-        selectedType = type;
-        document.getElementById('tGood').className = 'type-btn';
-        document.getElementById('tBad').className = 'type-btn';
-        document.getElementById('tNeutral').className = 'type-btn';
-        if (type === 'good') document.getElementById('tGood').className = 'type-btn sel-good';
-        if (type === 'bad') document.getElementById('tBad').className = 'type-btn sel-bad';
-        if (type === 'neutral') document.getElementById('tNeutral').className = 'type-btn sel-neutral';
-    }
-
-    function fileSelected(input) {
-        if (input.files && input.files[0]) {
-            const done = document.getElementById('uploadDone');
-            done.style.display = 'block';
-            done.textContent = '✓ File uploaded: ' + input.files[0].name;
+        if (!data || data.length === 0) {
+            list.innerHTML = '<div class="empty">No pending corrections right now.</div>'
+            return
         }
+
+        data.forEach(row => {
+            const card = document.createElement('div')
+            card.className = 'card'
+            card.innerHTML = `
+                <div class="label">User asked</div>
+                <div class="q">${escapeHtml(row.question)}</div>
+                <div class="label">Aurea said</div>
+                <div class="old-answer">${escapeHtml(row.aurea_answer)}</div>
+                <div class="label">Correction</div>
+                <div class="correction">${escapeHtml(row.user_correction)}</div>
+                <div class="btns">
+                    <button class="approve" onclick="approve(${row.id}, '${escapeAttr(row.question)}', '${escapeAttr(row.user_correction)}')">Approve — teach Aurea</button>
+                    <button class="reject" onclick="reject(${row.id})">Reject</button>
+                </div>
+            `
+            list.appendChild(card)
+        })
     }
 
-    function submitReview() {
-        const text = document.getElementById('reviewText').value.trim();
-        const agreed = document.getElementById('agreeCheck').checked;
-        const proof = document.getElementById('proofFile').files[0];
-
-        if (selectedStars === 0) { showMsg('Please give a star rating.', 'error'); return; }
-        if (!selectedType) { showMsg('Please select how the deal was.', 'error'); return; }
-        if (!text || text.split(' ').length < 5) { showMsg('Please write a more detailed review (at least 5 words).', 'error'); return; }
-        if (!proof) { showMsg('Please upload proof of your deal.', 'error'); return; }
-        if (!agreed) { showMsg('Please confirm that this is a real review.', 'error'); return; }
-
-        // Generate certificate ID
-        const certID = 'CERT-' + Math.random().toString(36).substr(2, 6).toUpperCase() + '-2026';
-        document.getElementById('certID').textContent = 'Certificate ID: ' + certID;
-
-        // Show success
-        document.getElementById('formBox').style.display = 'none';
-        document.getElementById('successSection').style.display = 'block';
-        window.scrollTo(0, 0);
+    function escapeHtml(s) {
+        return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+    }
+    function escapeAttr(s) {
+        return (s || '').replace(/'/g, "\\'")
     }
 
-    // Enter key on search
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') searchPerson();
-    });
+    async function approve(id, question, correction) {
+        await db.from('taught_facts').insert({ question, answer: correction })
+        await db.from('corrections').update({ status: 'approved' }).eq('id', id)
+        loadCorrections()
+    }
+
+    async function reject(id) {
+        await db.from('corrections').update({ status: 'rejected' }).eq('id', id)
+        loadCorrections()
+    }
+
+    loadCorrections()
 </script>
-<script src="auth.js"></script>
 </body>
 </html>
