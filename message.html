@@ -199,11 +199,38 @@
     }
 
     // ---- EMOTIONAL LAYER: cheap keyword-pattern emotion detector, same style as detectLanguage ----
+    // ---- MILD-INSULT DETECTION: playful put-downs get a roast, not a warning ----
+    function detectMildInsult(text) {
+        const lower = text.toLowerCase()
+        const mildWords = ['bekar', 'bakwas', 'nikamma', 'stupid', 'useless', 'dumb', 'faltu', 'idiot', 'pathetic', 'worthless', 'nonsense', 'nonsence', 'waste', 'garbage', 'trash', 'junk', 'lame', 'crap', 'suck', 'sucks', 'terrible', 'awful', 'horrible']
+        return mildWords.some(w => lower.includes(w))
+    }
+
+    // ---- SEVERE DETECTION: sexual harassment / hostile targeting — this gets the warning→suspend flow ----
+    function detectSevere(text) {
+        const lower = text.toLowerCase()
+        const severePatterns = ['sexy', 'nude', 'horny', 'send pic', 'hot body', 'kiss you', 'date me', 'chup kar', 'shut up']
+        return severePatterns.some(w => lower.includes(w))
+    }
+
+    const roastLines = {
+        en: [
+            "Not more than you, buddy.",
+            "That's cute — coming from someone typing to a chatbot at this hour.",
+            "I've heard better roasts from a broken toaster.",
+            "Bold words from someone who needed my help two messages ago."
+        ],
+        hi: [
+            "Tujhse zyada nahi, bhai.",
+            "Achha laga sunke — waise bhi tu chatbot se hi baat kar raha hai abhi.",
+            "Isse acche roast toh mujhe cold-coffee se milte hai.",
+            "Bade shaan se bol raha hai, do message pehle hi help maang raha tha."
+        ]
+    }
+
     // ---- RUDENESS DETECTION: insults directed at Aurea (not slurs, just common put-downs) ----
     function detectRudeness(text) {
-        const lower = text.toLowerCase()
-        const rudeWords = ['bekar', 'bakwas', 'nikamma', 'stupid', 'useless', 'dumb', 'shut up', 'chup kar', 'faltu', 'idiot', 'pathetic', 'worthless']
-        return rudeWords.some(w => lower.includes(w))
+        return detectSevere(text)
     }
 
     function getRudeCount() {
@@ -477,7 +504,14 @@
     async function buildResponse(userText) {
         const lang = detectLanguage(userText)
 
-        // ---- RUDENESS CHECK: takes priority over everything else ----
+        // ---- MILD INSULT: roast it, no escalation ----
+        if (detectMildInsult(userText) && !detectSevere(userText)) {
+            const text = pick(roastLines[lang])
+            await logConversation(userText, 'roasted', 'mild_insult', text)
+            return { text, type: 'flag' }
+        }
+
+        // ---- SEVERE: takes priority, escalates to suspend ----
         if (detectRudeness(userText)) {
             const count = incrementRudeCount()
             let text
