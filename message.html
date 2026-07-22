@@ -397,6 +397,16 @@
     // needed since those APIs block direct browser calls (CORS) — swap the fetch URL
     // there once that proxy exists.
     // ---- OWN LLM FALLBACK: b4knoix/AURYN-v0.1 via Supabase Edge Function (keeps HF token server-side) ----
+    // ---- ILLUSTRATIVE STORY: turns a real excerpt into a short "jaise X/Y ke saath hua" example ----
+    // Framed explicitly as an illustrative pattern, never as a claim about a specific real person.
+    async function generateIllustrativeStory(realExcerpt, lang) {
+        const instruction = lang === 'hi'
+            ? `Is real experience ke pattern se inspire hoke, 2 chhoti lines mein ek illustrative example bana (fictional names X aur Y use kar, "jaise..." se shuru kar): ${realExcerpt}`
+            : `Based on the pattern in this real experience, write a 2-line illustrative example (use fictional names, start with "like when..."): ${realExcerpt}`
+        const story = await askAuryn(instruction)
+        return story
+    }
+
     async function askAuryn(prompt) {
         try {
             const res = await fetch(SUPABASE_URL + '/functions/v1/auryn-inference', {
@@ -659,8 +669,13 @@
             const validateKey = 'validate_' + emotion
             let prefix = pick(patternBank[validateKey][lang])
             if (needsContinuityCheckin(emotion)) prefix += ' ' + pick(patternBank.continuity_checkin[lang])
-            // occasionally blend in a real human phrase (English only — dataset is English)
-            if (lang === 'en' && Math.random() < 0.3) {
+
+            // ---- occasionally add a relatable illustrative example, grounded in real life-stories ----
+            const realExcerpt = await getLifeStoryExcerpt(userText)
+            if (realExcerpt && Math.random() < 0.3) {
+                const story = await generateIllustrativeStory(realExcerpt, lang)
+                if (story) prefix += ' ' + story
+            } else if (lang === 'en' && Math.random() < 0.3) {
                 const humanLine = await getHumanEmotionPhrase(emotion)
                 if (humanLine) prefix += ' ' + humanLine
             }
