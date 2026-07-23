@@ -661,7 +661,6 @@
     result = insight
         ? { text: insight, type: 'ai' }
         : { text: pick(patternBank.unknown[lang]), type: 'ai' }
-        }
         } else if (intent === 'life_advice') {
             const useStory = Math.random() < 0.4
             const story = useStory ? await getLifeStoryExcerpt(userText) : null
