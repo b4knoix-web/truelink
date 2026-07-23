@@ -269,52 +269,14 @@
     }
 
     function detectIntent(text) {
-    const lower = text.toLowerCase().trim();
-
-    // Greeting
-    if (/^(hi|hello|hey|namaste|yo|hii|heyy)\b/.test(lower)) {
-        return 'greeting';
+        const lower = text.toLowerCase()
+        if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) return 'greeting'
+        if (lower.includes('tl-') || lower.includes('score') || lower.includes('trust')) return 'trust_score_query'
+        if (/(best|recommend|suggest|sabse achha|sabse badhiya|kaunsa lu|kaunsi le)/.test(lower)) return 'marketplace_query'
+        if (/(life ka matlab|zindagi|meaning of life|advice do|confused about life|kya karu|life advice|how to deal with)/.test(lower)) return 'life_advice'
+        if (/(kya hai|what is|who is|kaun hai|kya hota hai)/.test(lower)) return 'general_knowledge'
+        return 'unknown'
     }
-
-    // Trust score lookup
-    if (
-        lower.includes('tl-') ||
-        lower.includes('score') ||
-        lower.includes('trust')
-    ) {
-        return 'trust_score_query';
-    }
-
-    // Recommendations
-    if (
-        /(best|recommend|suggest|sabse achha|sabse badhiya|kaunsa lu|kaunsi le|which is best|recommend me)/.test(lower)
-    ) {
-        return 'marketplace_query';
-    }
-
-    // Opinion queries
-    if (
-        /(what do you think|what do you think about|what do you think of|your opinion|your thoughts|your view|what is your opinion|what's your opinion|kya sochti ho|kya sochte ho|kya soch|tumhara opinion|tumhara nazariya|tumhara view|apna vichar|kaisa lagta hai|tumhe kaise lagte)/.test(lower)
-    ) {
-        return 'opinion_query';
-    }
-
-    // Life advice
-    if (
-        /(life ka matlab|zindagi|meaning of life|advice do|confused about life|kya karu|life advice|how to deal with|how should i live)/.test(lower)
-    ) {
-        return 'life_advice';
-    }
-
-    // General knowledge
-    if (
-        /(kya hai|what is|who is|kaun hai|kya hota hai|define|explain|meaning of)/.test(lower)
-    ) {
-        return 'general_knowledge';
-    }
-
-    return 'unknown';
-}
 
     async function mockLookupUser(query) {
         const idMatch = query.toUpperCase().match(/TL-\d{4}-[A-Z]{2}/)
@@ -655,12 +617,6 @@
             } else {
                 result = { text: formatMarketplaceReply(picks, category, lang), type: 'ai' }
             }
-        } else if (intent === 'opinion_query') {
-    const humanTopic = /(human|insaan|log|manushya|people|duniya)/i.test(userText)
-    let insight = humanTopic ? await getHumanNatureInsight(db) : null
-    result = insight
-        ? { text: insight, type: 'ai' }
-        : { text: pick(patternBank.unknown[lang]), type: 'ai' }
         } else if (intent === 'life_advice') {
             const useStory = Math.random() < 0.4
             const story = useStory ? await getLifeStoryExcerpt(userText) : null
