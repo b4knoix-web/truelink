@@ -106,7 +106,7 @@
         <div>
             <div class="font-semibold text-sm">Aurea</div>
             <div class="text-[11px] text-white/40 flex items-center gap-1">
-                <span class="pulse-dot"></span> No sugarcoating. Real talk only.
+                <span class="pulse-dot"></span> Trust scores · recommendations · real talk
             </div>
         </div>
     </div>
@@ -135,6 +135,7 @@
 
     // ---- rolling in-memory history for this tab (avoids refetch on every message) ----
     const recentHistory = []
+    let lastExchange = null  // { question, answer } — used to detect corrections to Aurea's last reply
 
     const patternBank = {
         greeting: {
@@ -174,6 +175,18 @@
             en: ["Hey, still on your mind from before? How's it going now?"],
             hi: ["Wahi wali baat abhi tak chal rahi hai kya? Ab kaisa hai?"]
         },
+        rude_warning_1: {
+            en: ["Not gonna lie, that was uncalled for. Let's reset — try that again?", "Whoa. I'll let that slide once — talk to me straight."],
+            hi: ["Seedha bolu, ye zaroorat nahi thi. Dobara try kar, thoda theek se.", "Ek baar chhod raha hoon — seedhe se baat kar."]
+        },
+        rude_warning_2: {
+            en: ["Second time now. I'm not here to be talked down to — dial it back.", "That's twice. I've got patience, not infinite patience."],
+            hi: ["Dusri baar ho gaya ye. Mujhse aise baat mat kar.", "Do baar ho chuka — thoda dhyan rakh ab."]
+        },
+        suspend_notice: {
+            en: ["That's three. I'm flagging this conversation — someone will review it. Take care."],
+            hi: ["Teen baar ho gaya. Ye conversation flag kar rahi hoon review ke liye. Theek rehna."]
+        },
         marketplace_no_results: {
             en: ["I don't have enough verified data on {category} yet — need brands with 25k+ ratings on record."],
             hi: ["{category} ke liye abhi verified data kaafi nahi hai — 25k+ ratings wale brands chahiye record mein."]
@@ -187,6 +200,54 @@
     }
 
     // ---- EMOTIONAL LAYER: cheap keyword-pattern emotion detector, same style as detectLanguage ----
+    // ---- MILD-INSULT DETECTION: playful put-downs get a roast, not a warning ----
+    function detectMildInsult(text) {
+        const lower = text.toLowerCase()
+        const mildWords = ['bekar', 'bakwas', 'nikamma', 'stupid', 'useless', 'dumb', 'faltu', 'idiot', 'pathetic', 'worthless', 'nonsense', 'nonsence', 'waste', 'garbage', 'trash', 'junk', 'lame', 'crap', 'suck', 'sucks', 'terrible', 'awful', 'horrible']
+        return mildWords.some(w => lower.includes(w))
+    }
+
+    // ---- SEVERE DETECTION: sexual harassment / hostile targeting — this gets the warning→suspend flow ----
+    function detectSevere(text) {
+        const lower = text.toLowerCase()
+        const severePatterns = ['sexy', 'nude', 'horny', 'send pic', 'hot body', 'kiss you', 'date me', 'chup kar', 'shut up']
+        return severePatterns.some(w => lower.includes(w))
+    }
+
+    const roastLines = {
+        en: [
+            "Not more than you, buddy.",
+            "That's cute — coming from someone typing to a chatbot at this hour.",
+            "I've heard better roasts from a broken toaster.",
+            "Bold words from someone who needed my help two messages ago."
+        ],
+        hi: [
+            "Tujhse zyada nahi, bhai.",
+            "Achha laga sunke — waise bhi tu chatbot se hi baat kar raha hai abhi.",
+            "Isse acche roast toh mujhe cold-coffee se milte hai.",
+            "Bade shaan se bol raha hai, do message pehle hi help maang raha tha."
+        ]
+    }
+
+    // ---- RUDENESS DETECTION: insults directed at Aurea (not slurs, just common put-downs) ----
+    function detectRudeness(text) {
+        return detectSevere(text)
+    }
+
+    function getRudeCount() {
+        return parseInt(localStorage.getItem('aurea_rude_count') || '0')
+    }
+    function incrementRudeCount() {
+        const count = getRudeCount() + 1
+        localStorage.setItem('aurea_rude_count', String(count))
+        return count
+    }
+    async function flagAccount() {
+        try {
+            await db.from('account_flags').insert({ session_id: SESSION_ID, reason: 'repeated_rudeness' })
+        } catch (e) { /* non-fatal */ }
+    }
+
     function detectEmotion(text) {
         const lower = text.toLowerCase()
         const upsetWords = ['sad','upset','dukhi','rona','akela','hurt','broken up','breakup','naraz mujhse','depressed']
@@ -212,6 +273,7 @@
         if (/^(hi|hello|hey|namaste|yo)\b/.test(lower.trim())) return 'greeting'
         if (lower.includes('tl-') || lower.includes('score') || lower.includes('trust')) return 'trust_score_query'
         if (/(best|recommend|suggest|sabse achha|sabse badhiya|kaunsa lu|kaunsi le)/.test(lower)) return 'marketplace_query'
+        if (/(life ka matlab|zindagi|meaning of life|advice do|confused about life|kya karu|life advice|how to deal with)/.test(lower)) return 'life_advice'
         if (/(kya hai|what is|who is|kaun hai|kya hota hai)/.test(lower)) return 'general_knowledge'
         return 'unknown'
     }
@@ -334,6 +396,32 @@
     // For a real search engine (Google/DuckDuckGo) a Supabase Edge Function proxy is
     // needed since those APIs block direct browser calls (CORS) — swap the fetch URL
     // there once that proxy exists.
+    // ---- OWN LLM FALLBACK: b4knoix/AURYN-v0.1 via Supabase Edge Function (keeps HF token server-side) ----
+    // ---- ILLUSTRATIVE STORY: turns a real excerpt into a short "jaise X/Y ke saath hua" example ----
+    // Framed explicitly as an illustrative pattern, never as a claim about a specific real person.
+    async function generateIllustrativeStory(realExcerpt, lang) {
+        const instruction = lang === 'hi'
+            ? `Is real experience ke pattern se inspire hoke, 2 chhoti lines mein ek illustrative example bana (fictional names X aur Y use kar, "jaise..." se shuru kar): ${realExcerpt}`
+            : `Based on the pattern in this real experience, write a 2-line illustrative example (use fictional names, start with "like when..."): ${realExcerpt}`
+        const story = await askAuryn(instruction)
+        return story
+    }
+
+    async function askAuryn(prompt) {
+        try {
+            const res = await fetch(SUPABASE_URL + '/functions/v1/auryn-inference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            })
+            if (!res.ok) return null
+            const data = await res.json()
+            return data.text ? data.text.trim() : null
+        } catch (e) {
+            return null
+        }
+    }
+
     async function searchWeb(query) {
         try {
             const res = await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(query))
@@ -343,6 +431,59 @@
         } catch (e) {
             return null
         }
+    }
+
+    // ---- BOOK-INSIGHTS LAYER: wisdom pulled from public-domain classics ----
+    async function getBookInsight(userText) {
+        const stopWords = ['life','ka','matlab','zindagi','meaning','of','advice','do','confused','about','kya','karu','how','to','deal','with']
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3 && !stopWords.includes(w))[0]
+
+        let query = db.from('book_insights').select('insight_text, title')
+        query = keyword ? query.ilike('insight_text', `%${keyword}%`) : query
+        const { data } = await query.limit(20)
+
+        if (!data || data.length === 0) {
+            // fall back to any random insight rather than nothing
+            const { data: any } = await db.from('book_insights').select('insight_text, title').limit(50)
+            if (!any || any.length === 0) return null
+            const pickAny = any[Math.floor(Math.random() * any.length)]
+            return `${pickAny.insight_text} — ${pickAny.title}`
+        }
+        const picked = data[Math.floor(Math.random() * data.length)]
+        return `${picked.insight_text} — ${picked.title}`
+    }
+
+    // ---- REAL LIFE-STORIES: authentic personal-experience excerpts from real blog posts ----
+    async function getLifeStoryExcerpt(userText) {
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3)[0]
+        if (!keyword) return null
+        const { data } = await db
+            .from('life_stories')
+            .select('excerpt')
+            .ilike('excerpt', `%${keyword}%`)
+            .limit(30)
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].excerpt
+    }
+
+    // ---- REAL-HUMAN EMOTIONAL PHRASING: pulls an authentic line instead of only static templates ----
+    const emotionMap = {
+        upset: ['sad', 'lonely', 'devastated', 'disappointed', 'grieving'],
+        frustrated: ['angry', 'annoyed', 'furious'],
+        excited: ['excited', 'joyful', 'proud', 'hopeful']
+    }
+    async function getHumanEmotionPhrase(emotion) {
+        const labels = emotionMap[emotion]
+        if (!labels) return null
+        const { data } = await db
+            .from('emotion_conversations')
+            .select('human_response')
+            .in('emotion', labels)
+            .limit(50)
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].human_response
     }
 
     // ---- CONVERSATION MEMORY ----
@@ -363,8 +504,91 @@
         return last && last.emotion === emotion
     }
 
+    // ---- SELF-IMPROVEMENT LOOP (sandboxed, human-approved) ----
+    // Expects a Supabase table `suggestions`: id, user_text, language, tag, status
+    //   (pending/approved/rejected), proposed_response, created_at
+    // Aurea only FLAGS gaps here — nothing gets added to her real responses
+    // until a human reviews and approves it on review.html.
+    async function logSuggestion(userText, lang) {
+        try {
+            // avoid spamming duplicate suggestions for the same phrase
+            const { data: existing } = await db
+                .from('suggestions')
+                .select('id')
+                .eq('user_text', userText)
+                .eq('status', 'pending')
+                .limit(1)
+            if (existing && existing.length > 0) return
+
+            await db.from('suggestions').insert({
+                user_text: userText, language: lang, status: 'pending'
+            })
+        } catch (e) { /* non-fatal — chat still works without the suggestion log */ }
+    }
+
+    // ---- CORRECTION / TEACHING LOOP: user corrects or confirms Aurea's last answer ----
+    function detectCorrection(text) {
+        const lower = text.toLowerCase()
+        const correctionWords = ['galat hai', 'galat bola', 'wrong', 'not correct', 'incorrect', 'actually', 'nahi, ', 'sahi jawab', 'correction']
+        return correctionWords.some(w => lower.includes(w))
+    }
+
+    async function saveCorrection(question, aureaAnswer, userCorrection) {
+        try {
+            await db.from('corrections').insert({
+                question, aurea_answer: aureaAnswer, user_correction: userCorrection, status: 'pending'
+            })
+        } catch (e) { /* non-fatal */ }
+    }
+
+    // ---- TAUGHT KNOWLEDGE: approved corrections that Aurea now actually uses ----
+    async function getTaughtAnswer(userText) {
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3)[0]
+        if (!keyword) return null
+        const { data } = await db
+            .from('taught_facts')
+            .select('answer')
+            .ilike('question', `%${keyword}%`)
+            .limit(5)
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].answer
+    }
+
     async function buildResponse(userText) {
         const lang = detectLanguage(userText)
+
+        // ---- MILD INSULT: roast it, no escalation ----
+        if (detectMildInsult(userText) && !detectSevere(userText)) {
+            const text = pick(roastLines[lang])
+            await logConversation(userText, 'roasted', 'mild_insult', text)
+            return { text, type: 'flag' }
+        }
+
+        // ---- SEVERE: takes priority, escalates to suspend ----
+        if (detectRudeness(userText)) {
+            const count = incrementRudeCount()
+            let text
+            if (count === 1) text = pick(patternBank.rude_warning_1[lang])
+            else if (count === 2) text = pick(patternBank.rude_warning_2[lang])
+            else {
+                text = pick(patternBank.suspend_notice[lang])
+                await flagAccount()
+            }
+            await logConversation(userText, 'rude', 'rudeness', text)
+            return { text, type: 'flag' }
+        }
+
+        // ---- CORRECTION CHECK: user is correcting/teaching Aurea's last answer ----
+        if (lastExchange && detectCorrection(userText)) {
+            await saveCorrection(lastExchange.question, lastExchange.answer, userText)
+            const ackText = lang === 'hi'
+                ? "Samajh gayi — ye note kar liya, review ke baad seekh lungi."
+                : "Got it — noted that, I'll learn it properly once it's reviewed."
+            await logConversation(userText, 'neutral', 'correction', ackText)
+            return { text: ackText, type: 'ai' }
+        }
+
         const intent = detectIntent(userText)
         const emotion = detectEmotion(userText)
 
@@ -393,6 +617,17 @@
             } else {
                 result = { text: formatMarketplaceReply(picks, category, lang), type: 'ai' }
             }
+        } else if (intent === 'life_advice') {
+            const useStory = Math.random() < 0.4
+            const story = useStory ? await getLifeStoryExcerpt(userText) : null
+            if (story) {
+                result = { text: story, type: 'ai' }
+            } else {
+                const insight = await getBookInsight(userText)
+                result = insight
+                    ? { text: insight, type: 'ai' }
+                    : { text: pick(patternBank.unknown[lang]), type: 'ai' }
+            }
         } else if (intent === 'general_knowledge') {
             const term = userText.replace(/(kya hai|what is|who is|kaun hai|kya hota hai)/gi, '').trim()
             const summary = term ? await searchWeb(term) : null
@@ -400,9 +635,33 @@
                 ? { text: summary, type: 'ai' }
                 : { text: pick(patternBank.unknown[lang]), type: 'ai' }
         } else {
-            // ---- try learned community patterns before giving up ----
+            // ---- taught knowledge (human-approved corrections) — highest priority fallback ----
+            const taught = await getTaughtAnswer(userText)
+            if (taught) {
+                result = { text: taught, type: 'ai' }
+            } else {
+            // ---- try learned community patterns first ----
             const learned = await getLearnedResponse(userText, lang)
-            result = learned ? { text: learned, type: 'ai' } : { text: pick(patternBank.unknown[lang]), type: 'ai' }
+            if (learned) {
+                result = { text: learned, type: 'ai' }
+            } else {
+                // ---- try a real casual-chat match (free, fast — before calling AURYN) ----
+                const casual = lang === 'en' ? await getCasualResponse(userText) : null
+                if (casual) {
+                    result = { text: casual, type: 'ai' }
+                } else {
+                    // ---- own model fallback: AURYN-v0.1 ----
+                    const auryn = await askAuryn(userText)
+                    if (auryn) {
+                        result = { text: auryn, type: 'ai' }
+                    } else {
+                        // ---- genuinely stuck: log it as a suggestion ----
+                        await logSuggestion(userText, lang)
+                        result = { text: pick(patternBank.unknown[lang]), type: 'ai' }
+                    }
+                }
+            }
+            }
         }
 
         // ---- EMOTIONAL LAYER: validate-first prefix, and a continuity check-in if the same feeling recurs ----
@@ -410,11 +669,39 @@
             const validateKey = 'validate_' + emotion
             let prefix = pick(patternBank[validateKey][lang])
             if (needsContinuityCheckin(emotion)) prefix += ' ' + pick(patternBank.continuity_checkin[lang])
-            result = { text: prefix + '\n\n' + result.text, type: result.type }
+
+            // ---- occasionally add a relatable illustrative example, grounded in real life-stories ----
+            const realExcerpt = await getLifeStoryExcerpt(userText)
+            if (realExcerpt && Math.random() < 0.3) {
+                const story = await generateIllustrativeStory(realExcerpt, lang)
+                if (story) prefix += ' ' + story
+            } else if (lang === 'en' && Math.random() < 0.3) {
+                const humanLine = await getHumanEmotionPhrase(emotion)
+                if (humanLine) prefix += ' ' + humanLine
+            }
+            result = { text: prefix, type: result.type }
         }
 
         await logConversation(userText, emotion, intent, result.text)
+        lastExchange = { question: userText, answer: result.text }
         return result
+    }
+
+    // ---- REAL-CASUAL-CHAT LAYER: keyword-matched real dost-jaisi replies from DailyDialog ----
+    async function getCasualResponse(userText) {
+        const stopWords = ['the','a','an','is','are','was','were','do','you','i','me','my','to','of','and','hai','ka','ki','ke','main','mujhe','tu','tera']
+        const words = userText.toLowerCase().replace(/[^a-z0-9\u0900-\u097F\s]/g, '').split(/\s+/)
+        const keyword = words.filter(w => w.length > 3 && !stopWords.includes(w))[0]
+        if (!keyword) return null
+
+        const { data } = await db
+            .from('casual_conversations')
+            .select('message')
+            .ilike('message', `%${keyword}%`)
+            .limit(20)
+
+        if (!data || data.length === 0) return null
+        return data[Math.floor(Math.random() * data.length)].message.trim()
     }
 
     async function getLearnedResponse(userText, lang) {
